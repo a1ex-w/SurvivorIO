@@ -9,6 +9,8 @@ func server_offline():
 
 func _on_hostDebugButton_pressed():
 	Multihelper.create_game()
+	#Multihelper.join_game()
 
 func _on_connect_timer_timeout():
 	Multihelper.join_game()
+	#Multihelper.create_game()

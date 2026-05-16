@@ -27,7 +27,7 @@ func createHUD():
 	var hud := hudScene.instantiate()
 	$HUD.add_child(hud)
 
-#object spawn
+#objecat spawn
 
 func spawnObjects(amount):
 	var breakableScene := preload("res://scenes/object/breakable.tscn")

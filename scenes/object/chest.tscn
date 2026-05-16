@@ -1,0 +1,46 @@
+[gd_scene format=3 uid="uid://bnfjw1mp8wm5l"]
+
+[ext_resource type="Script" path="res://scenes/object/chest.gd" id="1_chest"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(40, 30)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_area"]
+size = Vector2(100, 80)
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_chest"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 2
+
+[node name="Chest" type="StaticBody2D"]
+script = ExtResource("1_chest")
+
+[node name="ChestVisual" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-20, -15, 20, -15, 20, 15, -20, 15)
+color = Color(0.588235, 0.392157, 0.196078, 1)
+
+[node name="LidStripe" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-20, -15, 20, -15, 20, -8, -20, -8)
+color = Color(0.4, 0.26, 0.1, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_body")
+
+[node name="InteractArea" type="Area2D" parent="."]
+collision_layer = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractArea"]
+shape = SubResource("RectangleShape2D_area")
+
+[node name="InteractLabel" type="Label" parent="."]
+offset_left = -60.0
+offset_top = -45.0
+offset_right = 60.0
+offset_bottom = -25.0
+text = "Press E to open"
+horizontal_alignment = 1
+visible = false
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("SceneReplicationConfig_chest")

@@ -1,0 +1,75 @@
+[gd_scene load_steps=2 format=3 uid="uid://dxchestui12ab"]
+
+[ext_resource type="Script" path="res://scenes/ui/chest/chest_ui.gd" id="1_chestui"]
+
+[node name="ChestUI" type="PanelContainer"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -210.0
+offset_top = -180.0
+offset_right = 210.0
+offset_bottom = 180.0
+script = ExtResource("1_chestui")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="TitleRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer/TitleRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Chest"
+theme_override_font_sizes/font_size = 18
+
+[node name="CloseButton" type="Button" parent="MarginContainer/VBoxContainer/TitleRow"]
+layout_mode = 2
+text = "Close"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="ContentRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PlayerPanel" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ContentRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PlayerLabel" type="Label" parent="MarginContainer/VBoxContainer/ContentRow/PlayerPanel"]
+layout_mode = 2
+text = "Your Items (click to deposit):"
+
+[node name="PlayerSlots" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ContentRow/PlayerPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+unique_name_in_owner = true
+
+[node name="VSeparator" type="VSeparator" parent="MarginContainer/VBoxContainer/ContentRow"]
+layout_mode = 2
+
+[node name="ChestPanel" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ContentRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ChestLabel" type="Label" parent="MarginContainer/VBoxContainer/ContentRow/ChestPanel"]
+layout_mode = 2
+text = "Chest Contents:"
+
+[node name="ChestSlots" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ContentRow/ChestPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+unique_name_in_owner = true
+
+[connection signal="pressed" from="MarginContainer/VBoxContainer/TitleRow/CloseButton" to="." method="_on_close_pressed"]
