@@ -2,7 +2,16 @@ extends Control
 
 func _ready():
 	if OS.has_feature("dedicated_server"):
-		Multihelper.create_game()
+		start_server()
+	else:
+		show_menu()
+
+func start_server():
+	$connectTimer.stop()
+	Multihelper.create_game()
+
+func show_menu():
+	pass
 
 func server_offline():
 	$connectTimer.start()
