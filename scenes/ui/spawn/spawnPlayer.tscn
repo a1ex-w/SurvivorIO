@@ -62,7 +62,7 @@ layout_mode = 2
 
 [node name="Label" type="Label" parent="PanelContainer/VBoxContainer"]
 layout_mode = 2
-text = "Welcome to 50k.io"
+text = "Welcome to game.dudeltron14.win!"
 horizontal_alignment = 1
 vertical_alignment = 1
 
