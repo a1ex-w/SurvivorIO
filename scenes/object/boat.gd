@@ -29,15 +29,31 @@ func _process(_delta):
 			if player_node:
 				position = player_node.position
 
-	if _tex_diagonal and _tex_main:
+	if _tex_main:
 		var delta_pos = position - _prev_pos
 		if delta_pos.length() > 0.5:
-			if abs(delta_pos.x) > abs(delta_pos.y):
+			$Sprite2D.texture = _tex_main
+			$Sprite2D.flip_h = false
+			$Sprite2D.flip_v = false
+			var is_diagonal: bool = abs(delta_pos.x) > abs(delta_pos.y) * 0.4 and abs(delta_pos.y) > abs(delta_pos.x) * 0.4
+			if is_diagonal:
+				# Swapped: NE↔SW, NW↔SE
 				$Sprite2D.texture = _tex_diagonal
-				$Sprite2D.flip_h = delta_pos.x < 0
-			else:
+				$Sprite2D.rotation = 0.0
+				$Sprite2D.flip_h = delta_pos.x > 0
+				$Sprite2D.flip_v = delta_pos.y < 0
+			elif abs(delta_pos.x) > abs(delta_pos.y):
+				# Swapped: E↔W
 				$Sprite2D.texture = _tex_main
+				$Sprite2D.rotation = -PI / 2.0 if delta_pos.x > 0 else PI / 2.0
 				$Sprite2D.flip_h = false
+				$Sprite2D.flip_v = false
+			else:
+				# Swapped: N↔S
+				$Sprite2D.texture = _tex_main
+				$Sprite2D.rotation = 0.0
+				$Sprite2D.flip_h = false
+				$Sprite2D.flip_v = delta_pos.y < 0
 	_prev_pos = position
 
 func _is_on_water() -> bool:

@@ -201,10 +201,11 @@ func _on_interact():
 		else:
 			placeTorch.rpc_id(1, get_global_mouse_position())
 	elif Inventory.checkHasItem(str(name), "boat"):
+		var boat_pos := _clamp_place_range(get_global_mouse_position(), 50.0)
 		if multiplayer.is_server():
-			placeBoat(get_global_mouse_position())
+			placeBoat(boat_pos)
 		else:
-			placeBoat.rpc_id(1, get_global_mouse_position())
+			placeBoat.rpc_id(1, boat_pos)
 	elif Inventory.checkHasItem(str(name), "chest"):
 		if multiplayer.is_server():
 			placeChest(get_global_mouse_position())
@@ -227,6 +228,12 @@ func _disembark():
 		position = _find_nearest_land(position)
 		sendPos.rpc(position)
 	current_boat = null
+
+func _clamp_place_range(target: Vector2, max_dist: float) -> Vector2:
+	var offset := target - global_position
+	if offset.length() > max_dist:
+		offset = offset.normalized() * max_dist
+	return global_position + offset
 
 func _is_water_position(world_pos: Vector2) -> bool:
 	var map = get_parent().get_parent().get_node_or_null("Map")
@@ -258,8 +265,9 @@ func placeBoat(at: Vector2):
 		return
 	if !Inventory.checkHasItem(str(name), "boat"):
 		return
+	var clamped := _clamp_place_range(at, 50.0)
 	Inventory.removeItem(str(name), "boat", 1)
-	Items.spawnPlaceableRpc.rpc("boat", at)
+	Items.spawnPlaceableRpc.rpc("boat", clamped)
 
 @rpc("any_peer", "call_remote", "reliable")
 func placeChest(at: Vector2):
