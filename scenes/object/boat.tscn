@@ -6,7 +6,7 @@
 size = Vector2(50, 30)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_area"]
-size = Vector2(110, 90)
+size = Vector2(90, 90)
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_boat"]
 properties/0/path = NodePath(".:position")
