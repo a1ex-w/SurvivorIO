@@ -58,7 +58,7 @@ _spawnable_scenes = PackedStringArray("res://scenes/attacks/slash_attack.tscn", 
 spawn_path = NodePath("../Projectiles")
 
 [node name="ObjectSpawner" type="MultiplayerSpawner" parent="."]
-_spawnable_scenes = PackedStringArray("res://scenes/object/breakable.tscn", "res://scenes/object/chest.tscn")
+_spawnable_scenes = PackedStringArray("res://scenes/object/breakable.tscn", "res://scenes/object/chest.tscn", "res://scenes/object/boat.tscn")
 spawn_path = NodePath("../Objects")
 
 [node name="PickupSpawner" type="MultiplayerSpawner" parent="."]

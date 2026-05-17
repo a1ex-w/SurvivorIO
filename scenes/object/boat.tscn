@@ -1,0 +1,44 @@
+[gd_scene format=3 uid="uid://dxboat1scene2b"]
+
+[ext_resource type="Script" path="res://scenes/object/boat.gd" id="1_boat"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(50, 30)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_area"]
+size = Vector2(110, 90)
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_boat"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 0
+properties/1/path = NodePath(".:boarded_player_id")
+properties/1/spawn = true
+properties/1/replication_mode = 2
+
+[node name="Boat" type="StaticBody2D"]
+script = ExtResource("1_boat")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_body")
+
+[node name="InteractArea" type="Area2D" parent="."]
+collision_layer = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractArea"]
+shape = SubResource("RectangleShape2D_area")
+
+[node name="InteractLabel" type="Label" parent="."]
+offset_left = -70.0
+offset_top = -45.0
+offset_right = 70.0
+offset_bottom = -25.0
+text = "Press E to board"
+horizontal_alignment = 1
+visible = false
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("SceneReplicationConfig_boat")
