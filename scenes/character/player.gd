@@ -29,6 +29,8 @@ var equippedItem : String:
 				spawnsProjectile = itemData["projectile"]
 			else:
 				spawnsProjectile = ""
+		else:
+			spawnsProjectile = ""
 
 #stats
 @export var maxHP := 250.0
