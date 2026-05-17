@@ -3,21 +3,15 @@ extends Control
 func _ready():
 	if OS.has_feature("dedicated_server"):
 		start_server()
-	else:
-		show_menu()
 
 func start_server():
-	$connectTimer.stop()
 	Multihelper.create_game()
 
-func show_menu():
-	pass
-
-func server_offline():
-	$connectTimer.start()
-
-func _on_hostDebugButton_pressed():
-	Multihelper.create_game()
-
-func _on_connect_timer_timeout():
+func _on_public_lobby_pressed():
 	Multihelper.join_game()
+
+func _on_host_test_server_pressed():
+	Multihelper.create_game()
+
+func _on_join_test_server_pressed():
+	Multihelper.join_game("localhost")
