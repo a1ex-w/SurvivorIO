@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://c3rwa8o141mf4"]
+[gd_scene load_steps=12 format=3 uid="uid://c3rwa8o141mf4"]
 
 [ext_resource type="Script" path="res://scenes/main/main.gd" id="1_5kenc"]
 [ext_resource type="PackedScene" uid="uid://bf074ibcy5o0" path="res://scenes/mapGen/map.tscn" id="1_vj1jr"]
@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" uid="uid://ceolcwatpaicu" path="res://scenes/ui/daynight/daynightcycle_ui.tscn" id="7_c4hjm"]
 [ext_resource type="Texture2D" uid="uid://d4iknbe05uwaj" path="res://scenes/main/daynightcycle-gradient-texture.tres" id="8_le63a"]
 [ext_resource type="Script" path="res://scenes/main/NavHelper.gd" id="10_40gnc"]
+[ext_resource type="Script" path="res://scenes/main/game_music.gd" id="11_music"]
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_dr53p"]
 properties/0/path = NodePath("dayNight:time")
@@ -82,6 +83,11 @@ replication_config = SubResource("SceneReplicationConfig_dr53p")
 
 [node name="NavHelper" type="Node2D" parent="."]
 script = ExtResource("10_40gnc")
+
+[node name="GameMusic" type="Node" parent="."]
+script = ExtResource("11_music")
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="GameMusic"]
 
 [connection signal="timeout" from="ObjectSpawnTimer" to="." method="_on_object_spawn_timer_timeout"]
 [connection signal="timeout" from="EnemySpawnTimer" to="." method="_on_enemy_spawn_timer_timeout"]

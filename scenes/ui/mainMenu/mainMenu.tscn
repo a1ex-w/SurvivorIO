@@ -109,6 +109,9 @@ text = "Join Test Server"
 layout_mode = 2
 text = "Exit Game"
 
+[node name="MusicPlayer" type="AudioStreamPlayer" parent="."]
+autoplay = true
+
 [node name="SettingsButton" type="Button" parent="."]
 layout_mode = 1
 anchor_left = 1.0

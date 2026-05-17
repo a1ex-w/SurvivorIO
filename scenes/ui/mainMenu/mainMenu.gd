@@ -15,6 +15,7 @@ const RESOLUTION_LABELS: Array[String] = [
 
 @onready var settings_overlay: Control = $SettingsOverlay
 @onready var resolution_dropdown: OptionButton = $SettingsOverlay/SettingsPanel/VBox/ResolutionRow/ResolutionDropdown
+@onready var music_player: AudioStreamPlayer = $MusicPlayer
 
 var _opened_from_game := false
 
@@ -22,6 +23,10 @@ func _ready():
 	if OS.has_feature("dedicated_server"):
 		start_server()
 	_setup_resolution_dropdown()
+	var stream := load("res://assets/sfx/menu_music.mp3") as AudioStreamMP3
+	stream.loop = true
+	music_player.stream = stream
+	music_player.play()
 
 func _setup_resolution_dropdown() -> void:
 	var current := DisplayServer.window_get_size()
@@ -35,13 +40,20 @@ func _setup_resolution_dropdown() -> void:
 func start_server():
 	Multihelper.create_game()
 
+func _stop_music() -> void:
+	if music_player.playing:
+		music_player.stop()
+
 func _on_public_lobby_pressed():
+	_stop_music()
 	Multihelper.join_game()
 
 func _on_host_test_server_pressed():
+	_stop_music()
 	Multihelper.create_game()
 
 func _on_join_test_server_pressed():
+	_stop_music()
 	Multihelper.join_game("localhost")
 
 func _on_exit_pressed() -> void:
