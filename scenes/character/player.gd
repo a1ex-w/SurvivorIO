@@ -19,6 +19,7 @@ const WALL_SNAP := 64.0
 var inventory : Control
 var nearby_chest = null
 var nearby_boat = null
+var nearby_door = null
 var on_boat := false
 var current_boat = null
 
@@ -180,6 +181,12 @@ func _unhandled_input(event):
 		if key >= KEY_1 and key <= KEY_9:
 			inventory.setSelection(key - KEY_1)
 
+func _get_selected_item() -> String:
+	var inv = Inventory.inventories.get(str(name), {})
+	var keys = inv.keys()
+	var slot = inventory.selectedSlot if inventory else 0
+	return keys[slot] if slot < keys.size() else ""
+
 func _on_interact():
 	if on_boat:
 		_disembark()
@@ -192,38 +199,25 @@ func _on_interact():
 			else:
 				nearby_boat.pickup.rpc_id(1, str(name))
 			nearby_boat = null
+	elif nearby_door and is_instance_valid(nearby_door):
+		nearby_door.interact(str(multiplayer.get_unique_id()))
 	elif nearby_chest and is_instance_valid(nearby_chest):
 		if nearby_chest.chest_ui_instance and is_instance_valid(nearby_chest.chest_ui_instance):
 			nearby_chest.close_ui()
 		else:
 			nearby_chest.open_ui()
-	elif equippedItem == "torch" and Inventory.checkHasItem(str(name), "torch") and not _is_water_position(get_global_mouse_position()):
+	else:
+		var selected := _get_selected_item()
+		if selected not in Items.placeables:
+			return
+		const SNAPPED := ["wall", "stone_wall", "door", "stone_door"]
+		var at := get_global_mouse_position()
+		if selected in SNAPPED:
+			at = (at / WALL_SNAP).round() * WALL_SNAP
 		if multiplayer.is_server():
-			placeTorch(get_global_mouse_position())
+			_place_selected(selected, at)
 		else:
-			placeTorch.rpc_id(1, get_global_mouse_position())
-	elif Inventory.checkHasItem(str(name), "boat"):
-		if multiplayer.is_server():
-			placeBoat(get_global_mouse_position())
-		else:
-			placeBoat.rpc_id(1, get_global_mouse_position())
-	elif Inventory.checkHasItem(str(name), "chest"):
-		if multiplayer.is_server():
-			placeChest(get_global_mouse_position())
-		else:
-			placeChest.rpc_id(1, get_global_mouse_position())
-	elif Inventory.checkHasItem(str(name), "wall"):
-		var snapped = (get_global_mouse_position() / WALL_SNAP).round() * WALL_SNAP
-		if multiplayer.is_server():
-			placeWall(snapped)
-		else:
-			placeWall.rpc_id(1, snapped)
-	elif Inventory.checkHasItem(str(name), "stone_wall"):
-		var snapped = (get_global_mouse_position() / WALL_SNAP).round() * WALL_SNAP
-		if multiplayer.is_server():
-			placeStoneWall(snapped)
-		else:
-			placeStoneWall.rpc_id(1, snapped)
+			_place_selected.rpc_id(1, selected, at)
 
 func _board(boat):
 	on_boat = true
@@ -267,18 +261,14 @@ func _find_nearest_land(world_pos: Vector2) -> Vector2:
 	return world_pos
 
 @rpc("any_peer", "call_remote", "reliable")
-func placeBoat(at: Vector2):
+func _place_selected(item_id: String, at: Vector2):
 	if !multiplayer.is_server():
 		return
-	if !Inventory.checkHasItem(str(name), "boat"):
+	if item_id not in Items.placeables:
 		return
-	Inventory.removeItem(str(name), "boat", 1)
-	Items.spawnPlaceableRpc.rpc("boat", at)
-
-@rpc("any_peer", "call_remote", "reliable")
-func placeChest(at: Vector2):
-	if !multiplayer.is_server():
+	if !Inventory.checkHasItem(str(name), item_id):
 		return
+<<<<<<< HEAD
 	if !Inventory.checkHasItem(str(name), "chest"):
 		return
 	Inventory.removeItem(str(name), "chest", 1)
@@ -310,6 +300,10 @@ func placeStoneWall(at: Vector2):
 		return
 	Inventory.removeItem(str(name), "stone_wall", 1)
 	Items.spawnPlaceableRpc.rpc("stone_wall", at)
+=======
+	Inventory.removeItem(str(name), item_id, 1)
+	Items.spawnPlaceableRpc.rpc(item_id, at)
+>>>>>>> b4cdc4f (Added doors and fixed torch bug)
 
 func punchCheckCollision():
 	var id = multiplayer.get_unique_id()

@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scenes/object/stone_wall.gd" id="1_stwall"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_stwall"]
-size = Vector2(64, 56)
+size = Vector2(64, 64)
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_stwall"]
 properties/0/path = NodePath(".:position")
@@ -26,7 +26,7 @@ tracks/0/keys = {
 "times": PackedFloat32Array(0, 0.1, 0.5),
 "transitions": PackedFloat32Array(1, 1, 1),
 "update": 0,
-"values": [Vector2(0.092, 0.092), Vector2(0.1104, 0.1104), Vector2(0.006, 0.006)]
+"values": [Vector2(0.092, 0.099), Vector2(0.1104, 0.1189), Vector2(0.006, 0.006)]
 }
 tracks/1/type = "method"
 tracks/1/imported = false
@@ -71,7 +71,7 @@ tracks/0/keys = {
 "times": PackedFloat32Array(0, 0.0001, 0.2, 0.3),
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 0,
-"values": [Vector2(0.092, 0.092), Vector2(0, 0), Vector2(0.1104, 0.1104), Vector2(0.092, 0.092)]
+"values": [Vector2(0.092, 0.099), Vector2(0, 0), Vector2(0.1104, 0.1189), Vector2(0.092, 0.099)]
 }
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_stwall"]
@@ -90,7 +90,7 @@ script = ExtResource("1_stwall")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture_filter = 1
-scale = Vector2(0.092, 0.092)
+scale = Vector2(0.092, 0.099)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_stwall")

@@ -41,6 +41,8 @@ var placeables := {
 	"boat": "boat",
 	"wall": "wall",
 	"stone_wall": "stone_wall",
+	"door": "door",
+	"stone_door": "stone_door",
 }
 
 var recipes := {
@@ -48,6 +50,8 @@ var recipes := {
 	"torch": {"wood": 3, "coal": 1},
 	"wall": {"wood": 1},
 	"stone_wall": {"stone": 2},
+	"door": {"wood": 2},
+	"stone_door": {"stone": 2},
 	"boat": {"wood": 1},
 	"sword1": {"wood": 2, "stone": 2},
 	"axe1": {"wood": 2, "stone": 3},

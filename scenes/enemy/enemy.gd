@@ -1,5 +1,7 @@
 extends CharacterBody2D
 
+const TORCH_REPEL_RADIUS := 220.0
+
 var spawner : Node2D
 var targetPlayer : CharacterBody2D
 @export var targetPlayerId : int:
@@ -35,12 +37,22 @@ func _process(_delta):
 		return
 	if is_instance_valid(targetPlayer):
 		rotateToTarget()
-		if position.distance_to(targetPlayer.position) > attackRange:
+		var repulsion := _get_torch_repulsion()
+		if repulsion != Vector2.ZERO:
+			velocity = repulsion * speed
+			move_and_slide()
+		elif position.distance_to(targetPlayer.position) > attackRange:
 			move_towards_position()
 		else:
 			tryAttack()
 	else:
 		die(false)
+
+func _get_torch_repulsion() -> Vector2:
+	for torch in get_tree().get_nodes_in_group("torch_light"):
+		if position.distance_to(torch.global_position) < TORCH_REPEL_RADIUS:
+			return (position - torch.global_position).normalized()
+	return Vector2.ZERO
 
 func rotateToTarget():
 	$MovingParts.look_at(targetPlayer.position)

@@ -1,0 +1,46 @@
+[gd_scene format=3 uid="uid://clecpmqff5x54"]
+
+[ext_resource type="Script" path="res://scenes/object/door.gd" id="1_door"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_stdoor"]
+size = Vector2(64, 64)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_stdoor_area"]
+size = Vector2(96, 96)
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_stdoor"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 2
+properties/1/path = NodePath(".:is_open")
+properties/1/spawn = true
+properties/1/replication_mode = 2
+
+[node name="StoneDoor" type="StaticBody2D"]
+script = ExtResource("1_door")
+door_type = "door_stone"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+scale = Vector2(0.090, 0.090)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_stdoor")
+
+[node name="InteractArea" type="Area2D" parent="."]
+collision_layer = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractArea"]
+shape = SubResource("RectangleShape2D_stdoor_area")
+
+[node name="InteractLabel" type="Label" parent="."]
+offset_left = -60.0
+offset_top = -50.0
+offset_right = 60.0
+offset_bottom = -30.0
+text = "Press E to open"
+horizontal_alignment = 1
+visible = false
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("SceneReplicationConfig_stdoor")
