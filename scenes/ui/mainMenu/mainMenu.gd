@@ -19,6 +19,7 @@ const RESOLUTION_LABELS: Array[String] = [
 @onready var volume_slider: HSlider = $SettingsOverlay/SettingsPanel/VBox/VolumeRow/VolumeSlider
 @onready var volume_percent: Label = $SettingsOverlay/SettingsPanel/VBox/VolumeRow/VolumePercent
 @onready var music_player: AudioStreamPlayer = $MusicPlayer
+@onready var disconnect_button: Button = $SettingsOverlay/SettingsPanel/VBox/DisconnectButton
 
 var _opened_from_game := false
 var _music_stopped := false
@@ -78,16 +79,38 @@ func _on_join_test_server_pressed():
 func _on_exit_pressed() -> void:
 	get_tree().quit()
 
+func _on_disconnect_pressed() -> void:
+	Multihelper.remove_multiplayer_peer()
+	# Clear the game level
+	var level := get_tree().get_root().get_node_or_null("Game/Level")
+	if level:
+		for c in level.get_children():
+			c.queue_free()
+	# Return to full main menu
+	disconnect_button.visible = false
+	settings_overlay.visible = false
+	_opened_from_game = false
+	$SubViewportContainer.show()
+	$TitleLabel.show()
+	$PanelContainer.show()
+	$SettingsButton.show()
+	show()
+
 func open_settings() -> void:
 	_opened_from_game = true
 	$SubViewportContainer.hide()
 	$TitleLabel.hide()
 	$PanelContainer.hide()
 	$SettingsButton.hide()
+	disconnect_button.visible = true
 	settings_overlay.visible = true
+
+func close_settings() -> void:
+	_on_settings_closed()
 
 func _on_settings_pressed() -> void:
 	_opened_from_game = false
+	disconnect_button.visible = false
 	settings_overlay.visible = true
 
 func _on_settings_closed() -> void:

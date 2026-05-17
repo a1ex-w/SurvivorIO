@@ -81,27 +81,29 @@ layout_mode = 2
 size_flags_vertical = 1
 theme_override_styles/background = SubResource("StyleBoxFlat_u6y7q")
 theme_override_styles/fill = SubResource("StyleBoxFlat_oukh8")
+theme_override_font_sizes/font_size = 11
 max_value = 1.0
 value = 1.0
-show_percentage = false
+show_percentage = true
 
-[node name="nameLabel" type="Label" parent="NameTag"]
+[node name="nameLabel" type="Label" parent="."]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(100, 10)
-layout_mode = 2
-theme_override_font_sizes/font_size = 14
+layout_mode = 0
+offset_top = 75.0
+offset_right = 100.0
+offset_bottom = 90.0
+theme_override_font_sizes/font_size = 13
 text = "playerName"
 horizontal_alignment = 1
 vertical_alignment = 1
-autowrap_mode = 1
 
 [node name="staminaBar" type="ProgressBar" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 0.0
-offset_top = 22.0
+offset_top = 95.0
 offset_right = 100.0
-offset_bottom = 27.0
+offset_bottom = 100.0
 theme_override_styles/background = SubResource("StyleBoxFlat_stam_bg")
 theme_override_styles/fill = SubResource("StyleBoxFlat_stam_fill")
 max_value = 1.0

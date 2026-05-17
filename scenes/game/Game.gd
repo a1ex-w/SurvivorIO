@@ -5,6 +5,8 @@ func _process(_delta: float) -> void:
 		if not %MainMenu.visible:
 			%MainMenu.show()
 			%MainMenu.open_settings()
+		else:
+			%MainMenu.close_settings()
 
 func start_game():
 	# Hide the UI and unpause to start the game.

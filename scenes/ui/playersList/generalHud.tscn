@@ -62,7 +62,8 @@ theme_override_font_sizes/font_size = 11
 text = "WASD — Move
 1-9 / Scroll — Select item
 LMB — Attack
-E — Interact / Place chest
+E — Interact / Place
+Q — Drop item
 C — Crafting menu
 Enter — Chat
 ESC — Settings"

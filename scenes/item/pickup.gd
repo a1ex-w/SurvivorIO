@@ -6,8 +6,15 @@ extends Area2D
 		itemId = value
 
 @export var stackCount := 1
+var dropper_id: String = ""
+
+func _ready():
+	if dropper_id != "":
+		get_tree().create_timer(3.0).timeout.connect(func(): dropper_id = "")
 
 func _on_body_entered(body):
 	if multiplayer.is_server() and body.is_in_group("player"):
+		if body.name == dropper_id:
+			return
 		queue_free()
 		Inventory.addItem(body.name, itemId, stackCount)
