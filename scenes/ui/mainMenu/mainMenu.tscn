@@ -1,6 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://dp2aay1f31ek8"]
+[gd_scene load_steps=6 format=3 uid="uid://dp2aay1f31ek8"]
 
 [ext_resource type="Script" path="res://scenes/ui/mainMenu/mainMenu.gd" id="1_3oxb4"]
+[ext_resource type="PackedScene" path="res://scenes/ui/mainMenu/menu_background.tscn" id="2_menubg"]
+[ext_resource type="FontFile" path="res://assets/fonts/pixelmix.ttf" id="3_font"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vtvwi"]
 content_margin_left = 20.0
@@ -13,6 +15,22 @@ corner_radius_top_right = 7
 corner_radius_bottom_right = 7
 corner_radius_bottom_left = 7
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_settings"]
+content_margin_left = 28.0
+content_margin_top = 22.0
+content_margin_right = 28.0
+content_margin_bottom = 28.0
+bg_color = Color(0.08, 0.08, 0.1, 0.92)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.3, 0.3, 0.35, 0.8)
+
 [node name="MainMenu" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -21,6 +39,40 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_3oxb4")
+
+[node name="SubViewportContainer" type="SubViewportContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="SubViewportContainer"]
+size = Vector2i(1280, 720)
+
+[node name="MenuBackground" parent="SubViewportContainer/SubViewport" instance=ExtResource("2_menubg")]
+
+[node name="TitleLabel" type="Label" parent="."]
+layout_mode = 1
+anchor_left = 0.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_top = -170.0
+offset_bottom = -80.0
+horizontal_alignment = 1
+text = "LUCAS.io"
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 72
+theme_override_colors/font_color = Color(1, 0.95, 0.75, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.04, 0.0, 1)
+theme_override_constants/outline_size = 6
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.55)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 4
 
 [node name="PanelContainer" type="PanelContainer" parent="."]
 custom_minimum_size = Vector2(215, 75)
@@ -53,6 +105,105 @@ text = "Host Test Server"
 layout_mode = 2
 text = "Join Test Server"
 
+[node name="ExitButton" type="Button" parent="PanelContainer/VBoxContainer"]
+layout_mode = 2
+text = "Exit Game"
+
+[node name="SettingsButton" type="Button" parent="."]
+layout_mode = 1
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_left = -54.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = 54.0
+text = "⚙"
+theme_override_font_sizes/font_size = 26
+
+[node name="SettingsOverlay" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+
+[node name="DimRect" type="ColorRect" parent="SettingsOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.38)
+mouse_filter = 2
+
+[node name="SettingsPanel" type="PanelContainer" parent="SettingsOverlay"]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -480.0
+offset_top = -270.0
+offset_right = 480.0
+offset_bottom = 270.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_settings")
+
+[node name="VBox" type="VBoxContainer" parent="SettingsOverlay/SettingsPanel"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="HeaderRow" type="HBoxContainer" parent="SettingsOverlay/SettingsPanel/VBox"]
+layout_mode = 2
+
+[node name="SettingsTitle" type="Label" parent="SettingsOverlay/SettingsPanel/VBox/HeaderRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Settings"
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(1, 0.95, 0.75, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.04, 0.0, 1)
+theme_override_constants/outline_size = 3
+
+[node name="CloseButton" type="Button" parent="SettingsOverlay/SettingsPanel/VBox/HeaderRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(36, 36)
+text = "✕"
+theme_override_font_sizes/font_size = 20
+
+[node name="HSeparator" type="HSeparator" parent="SettingsOverlay/SettingsPanel/VBox"]
+layout_mode = 2
+
+[node name="ExitSettingsButton" type="Button" parent="SettingsOverlay/SettingsPanel/VBox"]
+layout_mode = 2
+text = "Exit Game"
+
+[node name="ResolutionRow" type="HBoxContainer" parent="SettingsOverlay/SettingsPanel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="ResolutionLabel" type="Label" parent="SettingsOverlay/SettingsPanel/VBox/ResolutionRow"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "Resolution"
+theme_override_font_sizes/font_size = 16
+
+[node name="ResolutionDropdown" type="OptionButton" parent="SettingsOverlay/SettingsPanel/VBox/ResolutionRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 0)
+
 [connection signal="pressed" from="PanelContainer/VBoxContainer/PublicLobbyButton" to="." method="_on_public_lobby_pressed"]
 [connection signal="pressed" from="PanelContainer/VBoxContainer/HostTestServerButton" to="." method="_on_host_test_server_pressed"]
 [connection signal="pressed" from="PanelContainer/VBoxContainer/JoinTestServerButton" to="." method="_on_join_test_server_pressed"]
+[connection signal="pressed" from="PanelContainer/VBoxContainer/ExitButton" to="." method="_on_exit_pressed"]
+[connection signal="pressed" from="SettingsButton" to="." method="_on_settings_pressed"]
+[connection signal="pressed" from="SettingsOverlay/SettingsPanel/VBox/HeaderRow/CloseButton" to="." method="_on_settings_closed"]
+[connection signal="pressed" from="SettingsOverlay/SettingsPanel/VBox/ExitSettingsButton" to="." method="_on_exit_pressed"]
+[connection signal="item_selected" from="SettingsOverlay/SettingsPanel/VBox/ResolutionRow/ResolutionDropdown" to="." method="_on_resolution_selected"]
