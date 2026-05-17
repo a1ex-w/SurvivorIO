@@ -52,7 +52,10 @@ func checkHasItemAmount(id, item, amount) -> bool:
 func addItem(id, item, amount) -> void:
 	if checkHasItem(id, item):
 		inventories[id][item] += amount
-	else: inventories[id][item] = amount
+	else:
+		if checkInventoryExists(id) and inventories[id].size() >= Constants.MAX_INVENTORY_SLOTS:
+			return
+		inventories[id][item] = amount
 	inventoryUpdated.emit(id)
 
 func removeItem(id, item, amount=1) -> bool:
@@ -91,12 +94,22 @@ func useItemDurability(id, item, durabilityDamage = 1):
 
 @rpc("any_peer", "call_local", "reliable")
 func tryCraftItem(id, item) -> bool:
-	if canCraftItem(id, item):
+	if !canCraftItem(id, item):
+		return false
+	# If crafted item is a new type, check if a slot will be available after using ingredients
+	if !checkHasItem(id, item):
 		var recipe = Items.recipes[item]
+		var slots_freed := 0
 		for ing in recipe.keys():
-			if !removeItem(id, ing, recipe[ing]):
-				return false
-		addItem(id, item, 1)
-		inventoryUpdated.emit(id)
-		return true
-	return false
+			if checkItemCount(id, ing) == recipe[ing]:
+				slots_freed += 1
+		var slots_used := inventories[id].size() if id in inventories else 0
+		if slots_used - slots_freed >= Constants.MAX_INVENTORY_SLOTS:
+			return false
+	var recipe = Items.recipes[item]
+	for ing in recipe.keys():
+		if !removeItem(id, ing, recipe[ing]):
+			return false
+	addItem(id, item, 1)
+	inventoryUpdated.emit(id)
+	return true
