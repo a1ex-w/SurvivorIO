@@ -107,6 +107,9 @@ func _process(delta):
 		else:
 			stamina = min(maxStamina, stamina + STAMINA_REGEN * delta)
 		$PlayerUi.setStaminaBarRatio(stamina / maxStamina)
+		if on_boat and current_boat and is_instance_valid(current_boat):
+			var can_leave := _has_nearby_land(position, 45.0)
+			current_boat.get_node("InteractLabel").text = "Press E to disembark" if can_leave else "Too far from shore"
 		var mouse_position = get_global_mouse_position()
 		var direction_to_mouse = mouse_position - global_position
 		var angle = direction_to_mouse.angle()
@@ -133,18 +136,30 @@ func moveServer(vel, angle, doingAction):
 func sendPos(pos):
 	position = pos
 
+const MAP_BORDER_MARGIN := 32.0
+const MAP_WORLD_SIZE := Vector2(
+	Constants.MAP_SIZE.x * 64.0,
+	Constants.MAP_SIZE.y * 64.0
+)
+
+func _clamp_to_map() -> void:
+	position.x = clampf(position.x, MAP_BORDER_MARGIN, MAP_WORLD_SIZE.x - MAP_BORDER_MARGIN)
+	position.y = clampf(position.y, MAP_BORDER_MARGIN, MAP_WORLD_SIZE.y - MAP_BORDER_MARGIN)
+
 func moveProcess(vel, angle, doingAction):
 	if on_boat:
 		if vel != Vector2.ZERO:
 			var new_pos = position + vel * get_process_delta_time()
 			if _is_water_position(new_pos):
 				position = new_pos
+				_clamp_to_map()
 		$MovingParts.rotation = angle
 		handleAnims(vel, doingAction)
 		return
 	velocity = vel
 	if velocity != Vector2.ZERO:
 		move_and_slide()
+		_clamp_to_map()
 	$MovingParts.rotation = angle
 	handleAnims(vel, doingAction)
 
@@ -180,6 +195,8 @@ func _unhandled_input(event):
 		var key = event.physical_keycode
 		if key >= KEY_1 and key <= KEY_9:
 			inventory.setSelection(key - KEY_1)
+		elif key == KEY_Q:
+			_on_drop_item()
 
 func _get_selected_item() -> String:
 	var inv = Inventory.inventories.get(str(name), {})
@@ -189,7 +206,8 @@ func _get_selected_item() -> String:
 
 func _on_interact():
 	if on_boat:
-		_disembark()
+		if _has_nearby_land(position, 45.0):
+			_disembark()
 	elif nearby_boat and is_instance_valid(nearby_boat):
 		if _is_water_position(nearby_boat.position):
 			_board(nearby_boat)
@@ -236,6 +254,31 @@ func _disembark():
 		sendPos.rpc(position)
 	current_boat = null
 
+func _clamp_place_range(target: Vector2, max_dist: float) -> Vector2:
+	var offset := target - global_position
+	if offset.length() > max_dist:
+		offset = offset.normalized() * max_dist
+	return global_position + offset
+
+func _has_nearby_land(world_pos: Vector2, max_px: float) -> bool:
+	var map = get_parent().get_parent().get_node_or_null("Map")
+	if !map:
+		return false
+	var land_coords = [Vector2i(0,0), Vector2i(1,0), Vector2i(2,0),
+					   Vector2i(3,0), Vector2i(16,0), Vector2i(17,0)]
+	var tile_pos = map.tile_map.local_to_map(world_pos)
+	var max_tiles := int(ceil(max_px / 64.0)) + 1
+	for radius in range(0, max_tiles + 1):
+		for dx in range(-radius, radius + 1):
+			for dy in range(-radius, radius + 1):
+				if abs(dx) == radius or abs(dy) == radius:
+					var check: Vector2i = tile_pos + Vector2i(dx, dy)
+					if map.tile_map.get_cell_atlas_coords(0, check) in land_coords:
+						var land_world: Vector2 = map.tile_map.map_to_local(check)
+						if world_pos.distance_to(land_world) <= max_px:
+							return true
+	return false
+
 func _is_water_position(world_pos: Vector2) -> bool:
 	var map = get_parent().get_parent().get_node_or_null("Map")
 	if !map:
@@ -271,6 +314,33 @@ func _place_selected(item_id: String, at: Vector2):
 	Inventory.removeItem(str(name), item_id, 1)
 	Items.spawnPlaceableRpc.rpc(item_id, at)
 
+func _on_drop_item() -> void:
+	var inv: Dictionary = Inventory.inventories.get(str(name), {})
+	if inv.is_empty():
+		return
+	var keys := inv.keys()
+	if inventory.selectedSlot >= keys.size():
+		return
+	var item: String = keys[inventory.selectedSlot]
+	if multiplayer.is_server():
+		dropItem(item)
+	else:
+		dropItem.rpc_id(1, item)
+
+@rpc("any_peer", "call_remote", "reliable")
+func dropItem(item: String):
+	if !multiplayer.is_server():
+		return
+	if !Inventory.checkHasItem(str(name), item):
+		return
+	Inventory.removeItem(str(name), item, 1)
+	var pickups := get_node("/root/Game/Level/Main/Pickups")
+	var pickup: Area2D = preload("res://scenes/item/pickup.tscn").instantiate()
+	pickup.itemId = item
+	pickup.position = position
+	pickup.dropper_id = str(name)
+	pickups.call_deferred("add_child", pickup, true)
+
 func punchCheckCollision():
 	var id = multiplayer.get_unique_id()
 	if spawnsProjectile:
@@ -295,7 +365,9 @@ func increaseScore(by):
 	maxHP += by * 5
 	attackDamage += by
 	speed += by
-	Multihelper.spawnedPlayers[int(str(name))]["score"] += by
+	var pid := int(str(name))
+	if pid in Multihelper.spawnedPlayers:
+		Multihelper.spawnedPlayers[pid]["score"] += by
 	Multihelper.player_score_updated.emit()
 
 func objectDestroyed():
@@ -332,7 +404,7 @@ func dropInventory():
 
 @rpc("any_peer", "call_local", "reliable")
 func tryEquipItem(id):
-	if id in Inventory.inventories[name].keys():
+	if name in Inventory.inventories and id in Inventory.inventories[name]:
 		equipItem.rpc(id)
 
 @rpc("any_peer", "call_local", "reliable")

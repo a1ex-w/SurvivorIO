@@ -188,6 +188,11 @@ layout_mode = 2
 layout_mode = 2
 text = "Exit Game"
 
+[node name="DisconnectButton" type="Button" parent="SettingsOverlay/SettingsPanel/VBox"]
+layout_mode = 2
+text = "Disconnect"
+visible = false
+
 [node name="ResolutionRow" type="HBoxContainer" parent="SettingsOverlay/SettingsPanel/VBox"]
 layout_mode = 2
 theme_override_constants/separation = 20
@@ -235,5 +240,6 @@ horizontal_alignment = 2
 [connection signal="pressed" from="SettingsButton" to="." method="_on_settings_pressed"]
 [connection signal="pressed" from="SettingsOverlay/SettingsPanel/VBox/HeaderRow/CloseButton" to="." method="_on_settings_closed"]
 [connection signal="pressed" from="SettingsOverlay/SettingsPanel/VBox/ExitSettingsButton" to="." method="_on_exit_pressed"]
+[connection signal="pressed" from="SettingsOverlay/SettingsPanel/VBox/DisconnectButton" to="." method="_on_disconnect_pressed"]
 [connection signal="item_selected" from="SettingsOverlay/SettingsPanel/VBox/ResolutionRow/ResolutionDropdown" to="." method="_on_resolution_selected"]
 [connection signal="value_changed" from="SettingsOverlay/SettingsPanel/VBox/VolumeRow/VolumeSlider" to="." method="_on_volume_changed"]

@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://torch_placeable1"]
+[gd_scene load_steps=6 format=3 uid="uid://torch_placeable1"]
 
 [ext_resource type="Script" path="res://scenes/object/torch.gd" id="1"]
 [ext_resource type="Texture2D" uid="uid://fkefgfbw1bry" path="res://assets/daynight/light.webp" id="2"]
@@ -6,13 +6,13 @@
 [sub_resource type="CircleShape2D" id="CircleShape2D_1"]
 radius = 20.0
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fill"]
+bg_color = Color(1.0, 0.5, 0.1, 1.0)
+
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_torch"]
 properties/0/path = NodePath(".:position")
 properties/0/spawn = true
 properties/0/replication_mode = 2
-properties/1/path = NodePath(".:durability")
-properties/1/spawn = true
-properties/1/replication_mode = 2
 
 [node name="Torch" type="StaticBody2D"]
 script = ExtResource("1")
@@ -36,13 +36,7 @@ offset_right = 25.0
 offset_bottom = -37.0
 show_percentage = false
 value = 40.0
-theme_override_colors/font_color = Color(1, 0.6, 0.1, 1)
-
-[node name="BurnTimer" type="Timer" parent="."]
-wait_time = 1.0
-autostart = true
+theme_override_styles/fill = SubResource("StyleBoxFlat_fill")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_config = SubResource("SceneReplicationConfig_torch")
-
-[connection signal="timeout" from="BurnTimer" to="." method="_on_burn_timer_timeout"]
