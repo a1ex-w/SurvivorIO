@@ -25,10 +25,11 @@ var equippedItem : String:
 		equippedItem = value
 		if value in Items.equips:
 			var itemData = Items.equips[value]
-			if "projectile" in itemData:
-				spawnsProjectile = itemData["projectile"]
-			else:
-				spawnsProjectile = ""
+			spawnsProjectile = itemData.get("projectile", "")
+			$AnimationPlayer.speed_scale = itemData.get("fire_rate", 1.0)
+		else:
+			spawnsProjectile = ""
+			$AnimationPlayer.speed_scale = 1.0
 
 #stats
 @export var maxHP := 250.0
