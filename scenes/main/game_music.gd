@@ -16,10 +16,12 @@ var current_index := 0
 
 func _ready() -> void:
 	_build_shuffled_playlist()
-	# Start on a random track
 	current_index = randi() % playlist.size()
-	_play(current_index)
 	player.finished.connect(_on_finished)
+	Multihelper.player_registered.connect(_on_player_registered, CONNECT_ONE_SHOT)
+
+func _on_player_registered() -> void:
+	_play(current_index)
 
 func _build_shuffled_playlist() -> void:
 	playlist = TRACKS.duplicate()
