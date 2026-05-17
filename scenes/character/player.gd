@@ -40,6 +40,12 @@ var equippedItem : String:
 		if hp <= 0:
 			die()
 @export var speed := 200
+
+const SPRINT_MULT := 1.6
+const STAMINA_DRAIN := 25.0
+const STAMINA_REGEN := 15.0
+var maxStamina := 100.0
+var stamina := 100.0
 var spawnsProjectile := ""
 @export var attackDamage := 10:
 	get:
@@ -88,16 +94,21 @@ func disconnected(id):
 	if str(id) == name:
 		die()
 	
-func _process(_delta):
+func _process(delta):
 	if str(multiplayer.get_unique_id()) == name:
+		var is_sprinting = Input.is_key_pressed(KEY_SHIFT) and stamina > 0 and not on_boat
 		var vel = Input.get_vector("walkLeft", "walkRight", "walkUp", "walkDown") * speed
+		if is_sprinting and vel != Vector2.ZERO:
+			vel *= SPRINT_MULT
+			stamina = max(0.0, stamina - STAMINA_DRAIN * delta)
+		else:
+			stamina = min(maxStamina, stamina + STAMINA_REGEN * delta)
+		$PlayerUi.setStaminaBarRatio(stamina / maxStamina)
 		var mouse_position = get_global_mouse_position()
 		var direction_to_mouse = mouse_position - global_position
 		var angle = direction_to_mouse.angle()
 		var doingAction = Input.is_action_pressed("leftClickAction")
-		#Apply local movement
 		moveProcess(vel, angle, doingAction)
-		#Send input to server for replication
 		var inputData = {
 			"vel": vel,
 			"angle": angle,
