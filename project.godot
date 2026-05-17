@@ -22,6 +22,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 Constants="*res://scenes/autoloads/Constants.gd"
+Victories="*res://scenes/autoloads/Victories.gd"
 Multihelper="*res://scenes/autoloads/Multihelper.gd"
 Inventory="*res://scenes/autoloads/Inventory.gd"
 Items="*res://scenes/autoloads/Items.gd"
