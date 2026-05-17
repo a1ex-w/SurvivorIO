@@ -25,8 +25,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if multiplayer.is_server():
-		time += delta * INGAME_TO_REAL_MINUTE_DURATION * INGAME_SPEED
+	time += delta * INGAME_TO_REAL_MINUTE_DURATION * INGAME_SPEED
 
 	var value = (sin(time - PI / 2.0) + 1.0) / 2.0
 	self.color = gradient_texture.gradient.sample(value)
