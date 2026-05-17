@@ -19,3 +19,6 @@ addons/
 .claude/
 godot-git-plugin-v3.2.1
 CLAUDE.md
+
+# IDK what this is but we should probably ignore it...
+.DS_Store
