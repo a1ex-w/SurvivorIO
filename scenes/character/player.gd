@@ -268,42 +268,8 @@ func _place_selected(item_id: String, at: Vector2):
 		return
 	if !Inventory.checkHasItem(str(name), item_id):
 		return
-<<<<<<< HEAD
-	if !Inventory.checkHasItem(str(name), "chest"):
-		return
-	Inventory.removeItem(str(name), "chest", 1)
-	Items.spawnPlaceableRpc.rpc("chest", at)
-
-@rpc("any_peer", "call_remote", "reliable")
-func placeTorch(at: Vector2):
-	if !multiplayer.is_server():
-		return
-	if !Inventory.checkHasItem(str(name), "torch"):
-		return
-	Inventory.removeItem(str(name), "torch", 1)
-	Items.spawnPlaceableRpc.rpc("torch", at)
-
-@rpc("any_peer", "call_remote", "reliable")
-func placeWall(at: Vector2):
-	if !multiplayer.is_server():
-		return
-	if !Inventory.checkHasItem(str(name), "wall"):
-		return
-	Inventory.removeItem(str(name), "wall", 1)
-	Items.spawnPlaceableRpc.rpc("wall", at)
-
-@rpc("any_peer", "call_remote", "reliable")
-func placeStoneWall(at: Vector2):
-	if !multiplayer.is_server():
-		return
-	if !Inventory.checkHasItem(str(name), "stone_wall"):
-		return
-	Inventory.removeItem(str(name), "stone_wall", 1)
-	Items.spawnPlaceableRpc.rpc("stone_wall", at)
-=======
 	Inventory.removeItem(str(name), item_id, 1)
 	Items.spawnPlaceableRpc.rpc(item_id, at)
->>>>>>> b4cdc4f (Added doors and fixed torch bug)
 
 func punchCheckCollision():
 	var id = multiplayer.get_unique_id()
