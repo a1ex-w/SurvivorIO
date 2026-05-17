@@ -210,6 +210,16 @@ func _on_interact():
 			placeChest(get_global_mouse_position())
 		else:
 			placeChest.rpc_id(1, get_global_mouse_position())
+	elif Inventory.checkHasItem(str(name), "wall"):
+		if multiplayer.is_server():
+			placeWall(get_global_mouse_position())
+		else:
+			placeWall.rpc_id(1, get_global_mouse_position())
+	elif Inventory.checkHasItem(str(name), "stone_wall"):
+		if multiplayer.is_server():
+			placeStoneWall(get_global_mouse_position())
+		else:
+			placeStoneWall.rpc_id(1, get_global_mouse_position())
 
 func _board(boat):
 	on_boat = true
@@ -278,6 +288,24 @@ func placeTorch(at: Vector2):
 		return
 	Inventory.removeItem(str(name), "torch", 1)
 	Items.spawnPlaceableRpc.rpc("torch", at)
+
+@rpc("any_peer", "call_remote", "reliable")
+func placeWall(at: Vector2):
+	if !multiplayer.is_server():
+		return
+	if !Inventory.checkHasItem(str(name), "wall"):
+		return
+	Inventory.removeItem(str(name), "wall", 1)
+	Items.spawnPlaceableRpc.rpc("wall", at)
+
+@rpc("any_peer", "call_remote", "reliable")
+func placeStoneWall(at: Vector2):
+	if !multiplayer.is_server():
+		return
+	if !Inventory.checkHasItem(str(name), "stone_wall"):
+		return
+	Inventory.removeItem(str(name), "stone_wall", 1)
+	Items.spawnPlaceableRpc.rpc("stone_wall", at)
 
 func punchCheckCollision():
 	var id = multiplayer.get_unique_id()

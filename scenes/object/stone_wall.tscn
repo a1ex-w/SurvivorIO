@@ -1,0 +1,124 @@
+[gd_scene format=3 uid="uid://clecp6cb85x53"]
+
+[ext_resource type="Script" path="res://scenes/object/stone_wall.gd" id="1_stwall"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_stwall"]
+size = Vector2(58, 58)
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_stwall"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 2
+properties/1/path = NodePath("AnimationPlayer:current_animation")
+properties/1/spawn = true
+properties/1/replication_mode = 2
+
+[sub_resource type="Animation" id="Animation_stbreak"]
+resource_name = "break"
+length = 0.5
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.5),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector2(0.062, 0.062), Vector2(0.074, 0.074), Vector2(0.006, 0.006)]
+}
+tracks/1/type = "method"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0.5),
+"transitions": PackedFloat32Array(1),
+"values": [{
+"args": [],
+"method": &"_do_break"
+}]
+}
+
+[sub_resource type="Animation" id="Animation_stshake"]
+resource_name = "shake"
+length = 0.4
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:offset")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(0, 0), Vector2(5, -2), Vector2(-5, 2), Vector2(3, -1), Vector2(0, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_stspawn"]
+resource_name = "spawn"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.0001, 0.2, 0.3),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(0.062, 0.062), Vector2(0, 0), Vector2(0.074, 0.074), Vector2(0.062, 0.062)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_stwall"]
+_data = {
+"break": SubResource("Animation_stbreak"),
+"shake": SubResource("Animation_stshake"),
+"spawn": SubResource("Animation_stspawn")
+}
+
+[sub_resource type="Curve" id="Curve_stwall"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[node name="StoneWall" type="StaticBody2D" groups=["damageable"]]
+script = ExtResource("1_stwall")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+scale = Vector2(0.062, 0.062)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_stwall")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("SceneReplicationConfig_stwall")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+"": SubResource("AnimationLibrary_stwall")
+}
+autoplay = "spawn"
+
+[node name="hitParticle" type="CPUParticles2D" parent="."]
+emitting = false
+lifetime = 0.6
+one_shot = true
+explosiveness = 1.0
+randomness = 1.0
+lifetime_randomness = 0.2
+emission_shape = 1
+emission_sphere_radius = 30.0
+initial_velocity_min = 50.0
+initial_velocity_max = 200.0
+angular_velocity_min = -270.0
+angular_velocity_max = 270.0
+angle_min = -180.0
+angle_max = 180.0
+scale_amount_max = 3.0
+scale_amount_curve = SubResource("Curve_stwall")
+color = Color(0.76, 0.76, 0.76, 1)
