@@ -192,6 +192,8 @@ func _unhandled_input(event):
 		var key = event.physical_keycode
 		if key >= KEY_1 and key <= KEY_9:
 			inventory.setSelection(key - KEY_1)
+		elif key == KEY_Q:
+			_on_drop_item()
 
 func _on_interact():
 	if on_boat:
@@ -304,6 +306,33 @@ func placeBoat(at: Vector2):
 	Inventory.removeItem(str(name), "boat", 1)
 	Items.spawnPlaceableRpc.rpc("boat", clamped)
 
+func _on_drop_item() -> void:
+	var inv: Dictionary = Inventory.inventories.get(str(name), {})
+	if inv.is_empty():
+		return
+	var keys := inv.keys()
+	if inventory.selectedSlot >= keys.size():
+		return
+	var item: String = keys[inventory.selectedSlot]
+	if multiplayer.is_server():
+		dropItem(item)
+	else:
+		dropItem.rpc_id(1, item)
+
+@rpc("any_peer", "call_remote", "reliable")
+func dropItem(item: String):
+	if !multiplayer.is_server():
+		return
+	if !Inventory.checkHasItem(str(name), item):
+		return
+	Inventory.removeItem(str(name), item, 1)
+	var pickups := get_node("/root/Game/Level/Main/Pickups")
+	var pickup: Area2D = preload("res://scenes/item/pickup.tscn").instantiate()
+	pickup.itemId = item
+	pickup.position = position
+	pickup.dropper_id = str(name)
+	pickups.call_deferred("add_child", pickup, true)
+
 @rpc("any_peer", "call_remote", "reliable")
 func placeChest(at: Vector2):
 	if !multiplayer.is_server():
@@ -346,7 +375,9 @@ func increaseScore(by):
 	maxHP += by * 5
 	attackDamage += by
 	speed += by
-	Multihelper.spawnedPlayers[int(str(name))]["score"] += by
+	var pid := int(str(name))
+	if pid in Multihelper.spawnedPlayers:
+		Multihelper.spawnedPlayers[pid]["score"] += by
 	Multihelper.player_score_updated.emit()
 
 func objectDestroyed():

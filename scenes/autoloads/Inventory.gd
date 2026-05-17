@@ -37,7 +37,7 @@ func checkHasItem(id, item) -> bool:
 	if item in inventories[id]:
 		return true
 	return false
-	
+
 func checkItemCount(id, item) -> int:
 	if !checkHasItem(id, item):
 		return 0
@@ -96,19 +96,18 @@ func useItemDurability(id, item, durabilityDamage = 1):
 func tryCraftItem(id, item) -> bool:
 	if !canCraftItem(id, item):
 		return false
-	# If crafted item is a new type, check if a slot will be available after using ingredients
+	var craft_recipe = Items.recipes[item]
+	# If crafted item is new type, verify a slot opens up after using ingredients
 	if !checkHasItem(id, item):
-		var recipe = Items.recipes[item]
 		var slots_freed := 0
-		for ing in recipe.keys():
-			if checkItemCount(id, ing) == recipe[ing]:
+		for ing in craft_recipe.keys():
+			if checkItemCount(id, ing) == craft_recipe[ing]:
 				slots_freed += 1
-		var slots_used := inventories[id].size() if id in inventories else 0
+		var slots_used: int = inventories[id].size() if id in inventories else 0
 		if slots_used - slots_freed >= Constants.MAX_INVENTORY_SLOTS:
 			return false
-	var recipe = Items.recipes[item]
-	for ing in recipe.keys():
-		if !removeItem(id, ing, recipe[ing]):
+	for ing in craft_recipe.keys():
+		if !removeItem(id, ing, craft_recipe[ing]):
 			return false
 	addItem(id, item, 1)
 	inventoryUpdated.emit(id)
