@@ -162,6 +162,8 @@ func _on_interact():
 			nearby_chest.close_ui()
 		else:
 			nearby_chest.open_ui()
+	elif equippedItem == "torch" and Inventory.checkHasItem(str(name), "torch"):
+		placeTorch.rpc_id(1, get_global_mouse_position())
 	elif Inventory.checkHasItem(str(name), "chest"):
 		placeChest.rpc_id(1, get_global_mouse_position())
 
@@ -173,6 +175,15 @@ func placeChest(at: Vector2):
 		return
 	Inventory.removeItem(str(name), "chest", 1)
 	Items.spawnPlaceable("chest", at)
+
+@rpc("any_peer", "call_local", "reliable")
+func placeTorch(at: Vector2):
+	if !multiplayer.is_server():
+		return
+	if !Inventory.checkHasItem(str(name), "torch"):
+		return
+	Inventory.removeItem(str(name), "torch", 1)
+	Items.spawnPlaceable("torch", at)
 
 func punchCheckCollision():
 	var id = multiplayer.get_unique_id()

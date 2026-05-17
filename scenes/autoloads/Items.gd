@@ -37,11 +37,12 @@ var equips := {
 
 var placeables := {
 	"chest": "chest",
+	"torch": "torch",
 }
 
 var recipes := {
 	"chest": {"wood": 4},
-	"torch": {"wood": 3},
+	"torch": {"wood": 3, "coal": 1},
 	"sword1": {"wood": 2, "stone": 2},
 	"axe1": {"wood": 2, "stone": 3},
 	"pickaxe1": {"wood": 2, "stone": 3},

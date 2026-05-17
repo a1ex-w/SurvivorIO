@@ -45,9 +45,22 @@ func _process(_delta):
 func rotateToTarget():
 	$MovingParts.look_at(targetPlayer.position)
 
+const TORCH_REPEL_RADIUS = 200.0
+
 func move_towards_position():
 	var direction = (targetPlayer.position - position).normalized()
 	velocity = direction * speed
+
+	# Repel away from placed torches
+	for torch in get_tree().get_nodes_in_group("coal_repeller"):
+		if not is_instance_valid(torch): continue
+		var dist: float = position.distance_to((torch as Node2D).position)
+		if dist < TORCH_REPEL_RADIUS and dist > 0:
+			var repel: Vector2 = (position - (torch as Node2D).position).normalized()
+			# Square root curve: force kicks in strongly across most of the radius
+			var t := sqrt(1.0 - dist / TORCH_REPEL_RADIUS)
+			velocity += repel * speed * 4.0 * t
+
 	move_and_slide()
 
 func tryAttack():
