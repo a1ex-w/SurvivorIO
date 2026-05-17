@@ -15,6 +15,7 @@ signal player_killed
 		$MovingParts/Sprite2D.texture = load("res://assets/characters/bodies/"+value)
 		
 var inventory : Control
+var nearby_chest = null
 
 var equippedItem : String:
 	set(value):
@@ -148,6 +149,26 @@ func _unhandled_input(event):
 		_on_next_item()
 	elif event.is_action_pressed("previousItem"):
 		_on_previous_item()
+	elif event.is_action_pressed("interact"):
+		_on_interact()
+
+func _on_interact():
+	if nearby_chest and is_instance_valid(nearby_chest):
+		if nearby_chest.chest_ui_instance and is_instance_valid(nearby_chest.chest_ui_instance):
+			nearby_chest.close_ui()
+		else:
+			nearby_chest.open_ui()
+	elif Inventory.checkHasItem(str(name), "chest"):
+		placeChest.rpc_id(1, get_global_mouse_position())
+
+@rpc("any_peer", "call_local", "reliable")
+func placeChest(at: Vector2):
+	if !multiplayer.is_server():
+		return
+	if !Inventory.checkHasItem(str(name), "chest"):
+		return
+	Inventory.removeItem(str(name), "chest", 1)
+	Items.spawnPlaceable("chest", at)
 
 func punchCheckCollision():
 	var id = multiplayer.get_unique_id()

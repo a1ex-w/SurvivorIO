@@ -35,7 +35,12 @@ var equips := {
 	"magicSpear1": {"attack": "stab", "damage": 30, "damageType": "magic", "durability": 20.0, "projectile": "lightningBolt"},
 }
 
+var placeables := {
+	"chest": "chest",
+}
+
 var recipes := {
+	"chest": {"wood": 4},
 	"torch": {"wood": 3},
 	"sword1": {"wood": 2, "stone": 2},
 	"axe1": {"wood": 2, "stone": 3},
@@ -67,6 +72,13 @@ func spawnPickups(id, at, amount):
 		pickups.call_deferred("add_child", pickup, true)
 		pickup.itemId = id
 		pickup.position = at + Vector2(randf_range(-15,15), randf_range(-15,15))
+
+func spawnPlaceable(item_id: String, at: Vector2):
+	var objects := get_node("/root/Game/Level/Main/Objects")
+	var scene: PackedScene = load("res://scenes/object/" + placeables[item_id] + ".tscn")
+	var instance := scene.instantiate()
+	objects.add_child(instance, true)
+	instance.position = at
 
 func spawnProjectile(spawner, pId, towardsPos, canTarget):
 	var projectilesNode := get_node("/root/Game/Level/Main/Projectiles")
