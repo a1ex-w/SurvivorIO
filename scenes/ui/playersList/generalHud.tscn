@@ -84,4 +84,7 @@ E — Interact / Place
 Q — Drop item
 C — Crafting menu
 Enter — Chat
-ESC — Settings"
+ESC — Settings
+
+[Server commands]
+/give <name> <amount> — Grant score"
