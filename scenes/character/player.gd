@@ -383,7 +383,7 @@ func dropInventory():
 
 @rpc("any_peer", "call_local", "reliable")
 func tryEquipItem(id):
-	if id in Inventory.inventories[name].keys():
+	if name in Inventory.inventories and id in Inventory.inventories[name]:
 		equipItem.rpc(id)
 
 @rpc("any_peer", "call_local", "reliable")
