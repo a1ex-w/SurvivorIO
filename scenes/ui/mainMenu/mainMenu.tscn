@@ -202,6 +202,32 @@ theme_override_font_sizes/font_size = 16
 layout_mode = 2
 custom_minimum_size = Vector2(200, 0)
 
+[node name="VolumeRow" type="HBoxContainer" parent="SettingsOverlay/SettingsPanel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="VolumeLabel" type="Label" parent="SettingsOverlay/SettingsPanel/VBox/VolumeRow"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "Volume"
+theme_override_font_sizes/font_size = 16
+
+[node name="VolumeSlider" type="HSlider" parent="SettingsOverlay/SettingsPanel/VBox/VolumeRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 0)
+size_flags_horizontal = 3
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 1.0
+
+[node name="VolumePercent" type="Label" parent="SettingsOverlay/SettingsPanel/VBox/VolumeRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(48, 0)
+text = "100%"
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 2
+
 [connection signal="pressed" from="PanelContainer/VBoxContainer/PublicLobbyButton" to="." method="_on_public_lobby_pressed"]
 [connection signal="pressed" from="PanelContainer/VBoxContainer/HostTestServerButton" to="." method="_on_host_test_server_pressed"]
 [connection signal="pressed" from="PanelContainer/VBoxContainer/JoinTestServerButton" to="." method="_on_join_test_server_pressed"]
@@ -210,3 +236,4 @@ custom_minimum_size = Vector2(200, 0)
 [connection signal="pressed" from="SettingsOverlay/SettingsPanel/VBox/HeaderRow/CloseButton" to="." method="_on_settings_closed"]
 [connection signal="pressed" from="SettingsOverlay/SettingsPanel/VBox/ExitSettingsButton" to="." method="_on_exit_pressed"]
 [connection signal="item_selected" from="SettingsOverlay/SettingsPanel/VBox/ResolutionRow/ResolutionDropdown" to="." method="_on_resolution_selected"]
+[connection signal="value_changed" from="SettingsOverlay/SettingsPanel/VBox/VolumeRow/VolumeSlider" to="." method="_on_volume_changed"]

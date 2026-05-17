@@ -15,18 +15,24 @@ const RESOLUTION_LABELS: Array[String] = [
 
 @onready var settings_overlay: Control = $SettingsOverlay
 @onready var resolution_dropdown: OptionButton = $SettingsOverlay/SettingsPanel/VBox/ResolutionRow/ResolutionDropdown
+@onready var volume_slider: HSlider = $SettingsOverlay/SettingsPanel/VBox/VolumeRow/VolumeSlider
+@onready var volume_percent: Label = $SettingsOverlay/SettingsPanel/VBox/VolumeRow/VolumePercent
 @onready var music_player: AudioStreamPlayer = $MusicPlayer
 
 var _opened_from_game := false
+var _music_stopped := false
 
 func _ready():
 	if OS.has_feature("dedicated_server"):
 		start_server()
 	_setup_resolution_dropdown()
-	var stream := load("res://assets/sfx/menu_music.mp3") as AudioStreamMP3
-	stream.loop = true
-	music_player.stream = stream
-	music_player.play()
+	volume_slider.value = db_to_linear(AudioServer.get_bus_volume_db(0))
+	volume_percent.text = "%d%%" % roundi(volume_slider.value * 100)
+	if not _music_stopped:
+		var stream := load("res://assets/sfx/menu_music.mp3") as AudioStreamMP3
+		stream.loop = true
+		music_player.stream = stream
+		music_player.play()
 
 func _setup_resolution_dropdown() -> void:
 	var current := DisplayServer.window_get_size()
@@ -41,6 +47,7 @@ func start_server():
 	Multihelper.create_game()
 
 func _stop_music() -> void:
+	_music_stopped = true
 	if music_player.playing:
 		music_player.stop()
 
@@ -79,6 +86,10 @@ func _on_settings_closed() -> void:
 		$PanelContainer.show()
 		$SettingsButton.show()
 		hide()
+
+func _on_volume_changed(value: float) -> void:
+	AudioServer.set_bus_volume_db(0, linear_to_db(value))
+	volume_percent.text = "%d%%" % roundi(value * 100)
 
 func _on_resolution_selected(index: int) -> void:
 	var res := RESOLUTIONS[index]
