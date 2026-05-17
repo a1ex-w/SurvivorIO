@@ -73,11 +73,11 @@ func tryAttack():
 		projectile.get_node("MovingParts").rotation = $MovingParts.rotation
 		projectile.hitPlayer.connect(hitPlayer)
 		projectile.targetPos = targetPlayer.position
-		
+
 func hitPlayer(body):
 	if multiplayer.is_server():
 		body.getDamage(self, attackDamage, "normal")
-	
+
 func getDamage(causer, amount, _type):
 	hp -= amount
 	$bloodParticles.emitting = true

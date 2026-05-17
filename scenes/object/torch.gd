@@ -2,11 +2,8 @@ extends StaticBody2D
 
 const MAX_DURABILITY := 40.0
 
-var durability := MAX_DURABILITY:
-	set(value):
-		durability = value
-		if is_node_ready():
-			$HealthBar.value = durability
+var durability := MAX_DURABILITY
+var _elapsed := 0.0
 
 func _ready():
 	$Sprite2D.texture = load("res://assets/items/torch.png")
@@ -15,9 +12,12 @@ func _ready():
 	$HealthBar.max_value = MAX_DURABILITY
 	$HealthBar.value = durability
 
-func _on_burn_timer_timeout():
-	if !multiplayer.is_server():
-		return
-	durability -= 1.0
-	if durability <= 0:
-		queue_free()
+func _process(delta: float) -> void:
+	_elapsed += delta
+	if _elapsed >= 1.0:
+		_elapsed -= 1.0
+		durability -= 1.0
+		$HealthBar.value = durability
+		if durability <= 0:
+			if multiplayer.is_server():
+				queue_free()
