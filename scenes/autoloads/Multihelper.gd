@@ -16,7 +16,6 @@ signal player_score_updated
 signal data_loaded
 
 const PORT = Constants.PORT
-const DEFAULT_SERVER_IP = Constants.SERVER_IP
 
 var spawnedPlayers = {}
 var connectedPlayers = []
@@ -34,7 +33,7 @@ func _ready():
 
 func join_game(address = ""):
 	if address.is_empty():
-		address = DEFAULT_SERVER_IP
+		address = Constants.SERVER_IP
 	multiplayer.multiplayer_peer = null
 	var peer = WebSocketMultiplayerPeer.new()
 	var error
