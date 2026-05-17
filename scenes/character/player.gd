@@ -151,6 +151,10 @@ func _unhandled_input(event):
 		_on_previous_item()
 	elif event.is_action_pressed("interact"):
 		_on_interact()
+	elif event is InputEventKey and event.pressed and not event.echo:
+		var key = event.physical_keycode
+		if key >= KEY_1 and key <= KEY_9:
+			inventory.setSelection(key - KEY_1)
 
 func _on_interact():
 	if nearby_chest and is_instance_valid(nearby_chest):

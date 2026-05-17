@@ -40,3 +40,28 @@ layout_mode = 2
 
 [node name="PlayerSlot" parent="PanelContainer/VBoxContainer/playerList" instance=ExtResource("2_wx4wx")]
 layout_mode = 2
+
+[node name="ControlsPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 4
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -170.0
+offset_top = -130.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="Label" type="Label" parent="ControlsPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "WASD — Move
+1-9 / Scroll — Select item
+LMB — Attack
+E — Interact / Place chest
+C — Crafting menu
+Enter — Chat"

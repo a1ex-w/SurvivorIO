@@ -13,7 +13,9 @@ func _ready():
 	Inventory.updateReceived.connect(inventoryUpdated)
 	populateSlots()
 
-func _unhandled_input(_event):
+func _unhandled_input(event):
+	if event.is_action_pressed("craftMenu"):
+		_on_craft_button_pressed()
 	if Input.is_action_pressed("esc"):
 		if is_instance_valid(chatinput):
 			chatinput.queue_free()
@@ -72,6 +74,10 @@ func populateRecipes():
 		recipeSlot.canCraft = Inventory.canCraftItem(str(multiplayer.get_unique_id()), recipe)
 		%Recipes.add_child(recipeSlot)
 		recipeSlot.recipeSelected.connect(recipeSelected)
+
+func setSelection(index: int):
+	selectedSlot = clamp(index, 0, slotCount - 1)
+	selectionChanged.emit(selectedSlot)
 
 func nextSelection():
 	selectedSlot += 1
