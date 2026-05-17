@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://windmill01"]
+
+[ext_resource type="Script" path="res://scenes/object/windmill.gd" id="1_windmill"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_windmill"]
+size = Vector2(70, 70)
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_windmill"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 2
+
+[node name="Windmill" type="StaticBody2D"]
+script = ExtResource("1_windmill")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, 22)
+shape = SubResource("RectangleShape2D_windmill")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("SceneReplicationConfig_windmill")

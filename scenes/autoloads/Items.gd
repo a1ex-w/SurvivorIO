@@ -43,10 +43,12 @@ var placeables := {
 	"stone_wall": "stone_wall",
 	"door": "door",
 	"stone_door": "stone_door",
+	"windmill": "windmill",
 }
 
 var recipes := {
 	"chest": {"wood": 4},
+	"windmill": {"wood": 6, "stone": 3},
 	"torch": {"wood": 3, "coal": 1},
 	"wall": {"wood": 1},
 	"stone_wall": {"stone": 2},
