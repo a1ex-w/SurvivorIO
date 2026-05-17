@@ -171,16 +171,29 @@ func _on_interact():
 	if on_boat:
 		_disembark()
 	elif nearby_boat and is_instance_valid(nearby_boat):
-		_board(nearby_boat)
+		if _is_water_position(nearby_boat.position):
+			_board(nearby_boat)
+		else:
+			if multiplayer.is_server():
+				nearby_boat.pickup(str(name))
+			else:
+				nearby_boat.pickup.rpc_id(1, str(name))
+			nearby_boat = null
 	elif nearby_chest and is_instance_valid(nearby_chest):
 		if nearby_chest.chest_ui_instance and is_instance_valid(nearby_chest.chest_ui_instance):
 			nearby_chest.close_ui()
 		else:
 			nearby_chest.open_ui()
 	elif Inventory.checkHasItem(str(name), "boat"):
-		placeBoat.rpc_id(1, get_global_mouse_position())
+		if multiplayer.is_server():
+			placeBoat(get_global_mouse_position())
+		else:
+			placeBoat.rpc_id(1, get_global_mouse_position())
 	elif Inventory.checkHasItem(str(name), "chest"):
-		placeChest.rpc_id(1, get_global_mouse_position())
+		if multiplayer.is_server():
+			placeChest(get_global_mouse_position())
+		else:
+			placeChest.rpc_id(1, get_global_mouse_position())
 
 func _board(boat):
 	on_boat = true
@@ -221,25 +234,23 @@ func _find_nearest_land(world_pos: Vector2) -> Vector2:
 						return map.tile_map.map_to_local(check)
 	return world_pos
 
-@rpc("any_peer", "call_local", "reliable")
+@rpc("any_peer", "call_remote", "reliable")
 func placeBoat(at: Vector2):
 	if !multiplayer.is_server():
-		return
-	if !_is_water_position(at):
 		return
 	if !Inventory.checkHasItem(str(name), "boat"):
 		return
 	Inventory.removeItem(str(name), "boat", 1)
-	Items.spawnPlaceable("boat", at)
+	Items.spawnPlaceableRpc.rpc("boat", at)
 
-@rpc("any_peer", "call_local", "reliable")
+@rpc("any_peer", "call_remote", "reliable")
 func placeChest(at: Vector2):
 	if !multiplayer.is_server():
 		return
 	if !Inventory.checkHasItem(str(name), "chest"):
 		return
 	Inventory.removeItem(str(name), "chest", 1)
-	Items.spawnPlaceable("chest", at)
+	Items.spawnPlaceableRpc.rpc("chest", at)
 
 func punchCheckCollision():
 	var id = multiplayer.get_unique_id()
