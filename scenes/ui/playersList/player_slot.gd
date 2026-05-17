@@ -4,6 +4,8 @@ var data : Dictionary
 var playerId : int:
 	set(value):
 		playerId = value
+		if not value in Multihelper.spawnedPlayers:
+			return
 		data = Multihelper.spawnedPlayers[value]
 		$PlayerNameLabel.text = data["name"]
 		$PlayerScoreLabel.text = str(data["score"])

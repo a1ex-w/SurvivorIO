@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://fgbg7uc3rey6"]
+[gd_scene load_steps=7 format=3 uid="uid://fgbg7uc3rey6"]
 
 [ext_resource type="Script" path="res://scenes/ui/playerUI/playerUI.gd" id="1_dc8hm"]
 
@@ -32,6 +32,34 @@ expand_margin_top = 2.0
 expand_margin_right = 2.0
 expand_margin_bottom = 2.0
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_stam_bg"]
+bg_color = Color(0.15, 0.15, 0.15, 0.65)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.52549, 0.52549, 0.52549, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+expand_margin_left = 2.0
+expand_margin_top = 2.0
+expand_margin_right = 2.0
+expand_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_stam_fill"]
+bg_color = Color(1.0, 0.78, 0.0, 1)
+border_color = Color(0.701961, 0.701961, 0.701961, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+expand_margin_left = 2.0
+expand_margin_top = 2.0
+expand_margin_right = 2.0
+expand_margin_bottom = 2.0
+
 [node name="PlayerUi" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -53,7 +81,7 @@ layout_mode = 2
 size_flags_vertical = 1
 theme_override_styles/background = SubResource("StyleBoxFlat_u6y7q")
 theme_override_styles/fill = SubResource("StyleBoxFlat_oukh8")
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 max_value = 1.0
 value = 1.0
 show_percentage = true
@@ -64,7 +92,21 @@ layout_mode = 0
 offset_top = 75.0
 offset_right = 100.0
 offset_bottom = 90.0
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 13
 text = "playerName"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="staminaBar" type="ProgressBar" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 0.0
+offset_top = 95.0
+offset_right = 100.0
+offset_bottom = 100.0
+theme_override_styles/background = SubResource("StyleBoxFlat_stam_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_stam_fill")
+max_value = 1.0
+value = 1.0
+show_percentage = false
+visible = false
