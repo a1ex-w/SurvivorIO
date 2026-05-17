@@ -9,7 +9,7 @@ var itemId : String:
 	set(value):
 		itemId = value
 		if value:
-			$itemTexture.texture = load("res://assets/items/"+value+".png")
+			$itemTexture.texture = _loadItemTexture(value)
 			setItemDurability()
 		else:
 			$itemTexture.texture = null
@@ -20,6 +20,14 @@ var itemCount : int:
 	set(value):
 		itemCount = value
 		$Label.text = "x"+str(value)
+
+func _loadItemTexture(item_id: String) -> Texture2D:
+	var tex = load("res://assets/items/" + item_id + ".png")
+	if tex:
+		return tex
+	var img = Image.create(32, 32, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0.8, 0.5, 0.2, 1.0))
+	return ImageTexture.create_from_image(img)
 
 func setItemDurability():
 	if str(pId) not in Inventory.durabilities:

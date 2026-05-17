@@ -37,10 +37,12 @@ var equips := {
 
 var placeables := {
 	"chest": "chest",
+	"boat": "boat",
 }
 
 var recipes := {
 	"chest": {"wood": 4},
+	"boat": {"wood": 1},
 	"torch": {"wood": 3},
 	"sword1": {"wood": 2, "stone": 2},
 	"axe1": {"wood": 2, "stone": 3},
@@ -79,6 +81,10 @@ func spawnPlaceable(item_id: String, at: Vector2):
 	var instance := scene.instantiate()
 	objects.add_child(instance, true)
 	instance.position = at
+
+@rpc("authority", "call_local", "reliable")
+func spawnPlaceableRpc(item_id: String, at: Vector2):
+	spawnPlaceable(item_id, at)
 
 func spawnProjectile(spawner, pId, towardsPos, canTarget):
 	var projectilesNode := get_node("/root/Game/Level/Main/Projectiles")
