@@ -91,3 +91,12 @@ func decreasePlayerEnemyCount(pId) -> void:
 func _on_enemy_spawn_timer_timeout():
 	if multiplayer.is_server():
 		trySpawnEnemies()
+
+func reset_round() -> void:
+	for c in $Objects.get_children(): c.queue_free()
+	for c in $Enemies.get_children(): c.queue_free()
+	for c in $Pickups.get_children(): c.queue_free()
+	spawnedEnemies.clear()
+	spawnedObjects = 0
+	$Map.generateMap()
+	spawnObjects(initialSpawnObjects)

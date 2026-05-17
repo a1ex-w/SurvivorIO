@@ -89,10 +89,46 @@ func visibilityFilter(id):
 @rpc("any_peer", "call_local", "reliable")
 func sendMessage(text):
 	if multiplayer.is_server():
+		if str(text).begins_with("/"):
+			_handle_command(str(text))
+			return
 		var messageBoxScene := preload("res://scenes/ui/chat/message_box.tscn")
 		var messageBox := messageBoxScene.instantiate()
 		%PlayerMessages.add_child(messageBox, true)
 		messageBox.text = str(text)
+
+func _handle_command(text: String) -> void:
+	var parts := text.split(" ", false)
+	if parts.is_empty():
+		return
+	match parts[0]:
+		"/give":
+			if parts.size() < 3:
+				_send_server_msg("Usage: /give <player_name> <amount>")
+				return
+			var target_name := parts[1]
+			var amount := parts[2].to_int()
+			_cmd_give(target_name, amount)
+
+func _cmd_give(target_name: String, amount: int) -> void:
+	for pid in Multihelper.spawnedPlayers:
+		if Multihelper.spawnedPlayers[pid]["name"] == target_name:
+			var player_node := get_node_or_null("/root/Game/Level/Main/Players/" + str(pid))
+			if player_node:
+				Multihelper.spawnedPlayers[pid]["score"] += amount
+				var new_score: int = Multihelper.spawnedPlayers[pid]["score"]
+				player_node._sync_score.rpc(new_score)
+				_send_server_msg("Gave %d score to %s (total: %d)" % [amount, target_name, new_score])
+				if new_score >= Victories.WIN_SCORE:
+					Multihelper.trigger_win(pid)
+			return
+	_send_server_msg("Player '%s' not found." % target_name)
+
+func _send_server_msg(msg: String) -> void:
+	var messageBoxScene := preload("res://scenes/ui/chat/message_box.tscn")
+	var messageBox := messageBoxScene.instantiate()
+	%PlayerMessages.add_child(messageBox, true)
+	messageBox.text = "[Server] " + msg
 
 func disconnected(id):
 	if str(id) == name:
@@ -363,24 +399,34 @@ func sendProjectile(towards):
 	Items.spawnProjectile(self, spawnsProjectile, towards, "damageable")
 
 @rpc("authority", "call_local", "reliable")
-func increaseScore(by):
+func rewardPlayer(by):
 	hp += by * 5
 	maxHP += by * 5
 	attackDamage += by
 	speed += by
+	if multiplayer.is_server():
+		var pid := int(str(name))
+		if pid in Multihelper.spawnedPlayers:
+			Multihelper.spawnedPlayers[pid]["score"] += by
+			_sync_score.rpc(Multihelper.spawnedPlayers[pid]["score"])
+			if Multihelper.spawnedPlayers[pid]["score"] >= Victories.WIN_SCORE:
+				Multihelper.trigger_win(pid)
+
+@rpc("authority", "call_local", "reliable")
+func _sync_score(new_score: int) -> void:
 	var pid := int(str(name))
 	if pid in Multihelper.spawnedPlayers:
-		Multihelper.spawnedPlayers[pid]["score"] += by
+		Multihelper.spawnedPlayers[pid]["score"] = new_score
 	Multihelper.player_score_updated.emit()
 
 func objectDestroyed():
-	increaseScore.rpc(Constants.OBJECT_SCORE_GAIN)
+	rewardPlayer.rpc(Constants.OBJECT_SCORE_GAIN)
 
 func mobKilled():
-	increaseScore.rpc(Constants.MOB_SCORE_GAIN)
+	rewardPlayer.rpc(Constants.MOB_SCORE_GAIN)
 
 func enemyPlayerKilled():
-	increaseScore.rpc(Constants.PK_SCORE_GAIN)
+	rewardPlayer.rpc(Constants.PK_SCORE_GAIN)
 
 func getDamage(causer, amount, _type):
 	hp -= amount

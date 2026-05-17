@@ -7,7 +7,8 @@ var playerId : int:
 		if not value in Multihelper.spawnedPlayers:
 			return
 		data = Multihelper.spawnedPlayers[value]
-		$PlayerNameLabel.text = data["name"]
+		var wins: int = data.get("wins", 0)
+		$PlayerNameLabel.text = ("♛%d " % wins + data["name"]) if wins > 0 else data["name"]
 		$PlayerScoreLabel.text = str(data["score"])
 		resizeNameToFit($PlayerNameLabel)
 		resizeNameToFit($PlayerScoreLabel)

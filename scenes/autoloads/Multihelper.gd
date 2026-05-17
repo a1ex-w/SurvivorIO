@@ -13,6 +13,9 @@ signal player_spawned(peer_id, player_info)
 signal player_despawned
 signal player_registered
 signal player_score_updated
+signal win_announced(winner_name: String, win_count: int)
+
+var _win_pending := false
 signal data_loaded
 
 const PORT = Constants.PORT
@@ -68,6 +71,8 @@ func remove_multiplayer_peer():
 
 func _on_player_connected(id):
 	print("player connected with id "+str(id)+" to "+str(multiplayer.get_unique_id()))
+	if multiplayer.is_server():
+		Victories.sync_to_peer(id)
 
 @rpc("call_local" ,"any_peer", "reliable")
 func _register_character(new_player_info):
@@ -125,6 +130,42 @@ func _on_server_disconnected():
 	multiplayer.multiplayer_peer = null
 	server_disconnected.emit()
 
+func trigger_win(winner_pid: int) -> void:
+	if not multiplayer.is_server() or _win_pending:
+		return
+	_win_pending = true
+	var winner_name: String = spawnedPlayers[winner_pid]["name"]
+	var win_count := Victories.add_win(winner_name)
+	# Update wins in spawnedPlayers so leaderboard refreshes
+	spawnedPlayers[winner_pid]["wins"] = win_count
+	player_score_updated.emit()
+	# Broadcast announcement
+	_broadcast_win.rpc(winner_name, win_count)
+	# Wait then reset
+	await get_tree().create_timer(5.0).timeout
+	_reset_round.rpc()
+	_win_pending = false
+
+@rpc("authority", "call_local", "reliable")
+func _broadcast_win(winner_name: String, win_count: int) -> void:
+	win_announced.emit(winner_name, win_count)
+
+@rpc("authority", "call_local", "reliable")
+func _reset_round() -> void:
+	if multiplayer.is_server():
+		# Reset all scores server-side and broadcast each to clients
+		for pid in spawnedPlayers:
+			spawnedPlayers[pid]["score"] = 0
+			var player_node := get_node_or_null("/root/Game/Level/Main/Players/" + str(pid))
+			if player_node:
+				player_node._sync_score.rpc(0)
+		player_score_updated.emit()
+		# Reset map
+		mapSeed = randi()
+		var m := get_node_or_null("/root/Game/Level/Main")
+		if m:
+			m.reset_round()
+
 func loadMap():
 	main = get_node("/root/Game/Level/Main")
 	map = main.get_node("Map")
@@ -134,6 +175,7 @@ func requestSpawn(playerName, id, characterFile):
 	player_info["name"] = playerName
 	player_info["body"] = characterFile
 	player_info["score"] = 0
+	player_info["wins"] = Victories.get_wins(playerName)
 	spawnedPlayers[id] = player_info
 	_register_character.rpc(player_info)
 	spawnPlayer.rpc_id(1, playerName, id, characterFile)
