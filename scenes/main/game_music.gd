@@ -15,6 +15,8 @@ var current_index := 0
 @onready var player: AudioStreamPlayer = $AudioStreamPlayer
 
 func _ready() -> void:
+	if multiplayer.is_server():
+		return
 	_build_shuffled_playlist()
 	current_index = randi() % playlist.size()
 	player.finished.connect(_on_finished)
