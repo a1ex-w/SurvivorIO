@@ -1,16 +1,16 @@
 extends Control
 
 const RESOLUTIONS: Array[Vector2i] = [
-	Vector2i(1280, 720),
-	Vector2i(1600, 900),
-	Vector2i(1920, 1080),
 	Vector2i(2560, 1440),
+	Vector2i(1920, 1080),
+	Vector2i(1600, 900),
+	Vector2i(1280, 720),
 ]
 const RESOLUTION_LABELS: Array[String] = [
-	"1280 × 720",
-	"1600 × 900",
-	"1920 × 1080",
 	"2560 × 1440",
+	"1920 × 1080",
+	"1600 × 900",
+	"1280 × 720",
 ]
 
 @onready var settings_overlay: Control = $SettingsOverlay
