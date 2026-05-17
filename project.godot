@@ -35,7 +35,7 @@ window/stretch/mode="viewport"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg")
+enabled=PackedStringArray("res://addons/godot-neovim/plugin.cfg", "res://addons/godot_mcp/plugin.cfg")
 
 [filesystem]
 

@@ -16,6 +16,9 @@ signal player_killed
 		
 var inventory : Control
 var nearby_chest = null
+var nearby_boat = null
+var on_boat := false
+var current_boat = null
 
 var equippedItem : String:
 	set(value):
@@ -117,11 +120,19 @@ func sendPos(pos):
 	position = pos
 
 func moveProcess(vel, angle, doingAction):
+	if on_boat:
+		if vel != Vector2.ZERO:
+			var new_pos = position + vel * get_process_delta_time()
+			if _is_water_position(new_pos):
+				position = new_pos
+		$MovingParts.rotation = angle
+		handleAnims(vel, doingAction)
+		return
 	velocity = vel
 	if velocity != Vector2.ZERO:
 		move_and_slide()
 	$MovingParts.rotation = angle
-	handleAnims(vel,doingAction)
+	handleAnims(vel, doingAction)
 
 func handleAnims(vel, doing_action):
 	if doing_action:
@@ -157,33 +168,105 @@ func _unhandled_input(event):
 			inventory.setSelection(key - KEY_1)
 
 func _on_interact():
-	if nearby_chest and is_instance_valid(nearby_chest):
+	if on_boat:
+		_disembark()
+	elif nearby_boat and is_instance_valid(nearby_boat):
+		if _is_water_position(nearby_boat.position):
+			_board(nearby_boat)
+		else:
+			if multiplayer.is_server():
+				nearby_boat.pickup(str(name))
+			else:
+				nearby_boat.pickup.rpc_id(1, str(name))
+			nearby_boat = null
+	elif nearby_chest and is_instance_valid(nearby_chest):
 		if nearby_chest.chest_ui_instance and is_instance_valid(nearby_chest.chest_ui_instance):
 			nearby_chest.close_ui()
 		else:
 			nearby_chest.open_ui()
-	elif equippedItem == "torch" and Inventory.checkHasItem(str(name), "torch"):
-		placeTorch.rpc_id(1, get_global_mouse_position())
+	elif equippedItem == "torch" and Inventory.checkHasItem(str(name), "torch") and not _is_water_position(get_global_mouse_position()):
+		if multiplayer.is_server():
+			placeTorch(get_global_mouse_position())
+		else:
+			placeTorch.rpc_id(1, get_global_mouse_position())
+	elif Inventory.checkHasItem(str(name), "boat"):
+		if multiplayer.is_server():
+			placeBoat(get_global_mouse_position())
+		else:
+			placeBoat.rpc_id(1, get_global_mouse_position())
 	elif Inventory.checkHasItem(str(name), "chest"):
-		placeChest.rpc_id(1, get_global_mouse_position())
+		if multiplayer.is_server():
+			placeChest(get_global_mouse_position())
+		else:
+			placeChest.rpc_id(1, get_global_mouse_position())
 
-@rpc("any_peer", "call_local", "reliable")
+func _board(boat):
+	on_boat = true
+	current_boat = boat
+	collision_mask = 0
+	position = boat.position
+	sendPos.rpc(position)
+	boat.set_boarded.rpc(str(name))
+
+func _disembark():
+	on_boat = false
+	collision_mask = 1
+	if current_boat and is_instance_valid(current_boat):
+		current_boat.set_boarded.rpc("")
+		position = _find_nearest_land(position)
+		sendPos.rpc(position)
+	current_boat = null
+
+func _is_water_position(world_pos: Vector2) -> bool:
+	var map = get_parent().get_parent().get_node_or_null("Map")
+	if !map:
+		return false
+	var tile_pos = map.tile_map.local_to_map(world_pos)
+	var atlas = map.tile_map.get_cell_atlas_coords(0, tile_pos)
+	return atlas in [Vector2i(18, 0), Vector2i(19, 0)]
+
+func _find_nearest_land(world_pos: Vector2) -> Vector2:
+	var map = get_parent().get_parent().get_node_or_null("Map")
+	if !map:
+		return world_pos
+	var land_coords = [Vector2i(0,0), Vector2i(1,0), Vector2i(2,0),
+					   Vector2i(3,0), Vector2i(16,0), Vector2i(17,0)]
+	var tile_pos = map.tile_map.local_to_map(world_pos)
+	for radius in range(1, 15):
+		for dx in range(-radius, radius + 1):
+			for dy in range(-radius, radius + 1):
+				if abs(dx) == radius or abs(dy) == radius:
+					var check = tile_pos + Vector2i(dx, dy)
+					if map.tile_map.get_cell_atlas_coords(0, check) in land_coords:
+						return map.tile_map.map_to_local(check)
+	return world_pos
+
+@rpc("any_peer", "call_remote", "reliable")
+func placeBoat(at: Vector2):
+	if !multiplayer.is_server():
+		return
+	if !Inventory.checkHasItem(str(name), "boat"):
+		return
+	Inventory.removeItem(str(name), "boat", 1)
+	Items.spawnPlaceableRpc.rpc("boat", at)
+
+@rpc("any_peer", "call_remote", "reliable")
 func placeChest(at: Vector2):
 	if !multiplayer.is_server():
 		return
 	if !Inventory.checkHasItem(str(name), "chest"):
 		return
 	Inventory.removeItem(str(name), "chest", 1)
-	Items.spawnPlaceable("chest", at)
+	Items.spawnPlaceableRpc.rpc("chest", at)
 
-@rpc("any_peer", "call_local", "reliable")
+@rpc("any_peer", "call_remote", "reliable")
 func placeTorch(at: Vector2):
 	if !multiplayer.is_server():
 		return
 	if !Inventory.checkHasItem(str(name), "torch"):
 		return
 	Inventory.removeItem(str(name), "torch", 1)
-	Items.spawnPlaceable("torch", at)
+	Items.spawnPlaceableRpc.rpc("torch", at)
 
 func punchCheckCollision():
 	var id = multiplayer.get_unique_id()
