@@ -2,23 +2,43 @@ extends StaticBody2D
 
 var boarded_player_id := ""
 
+var _tex_main: Texture2D
+var _tex_diagonal: Texture2D
+var _prev_pos := Vector2.ZERO
+
 func _ready():
-	var img = Image.create(50, 30, false, Image.FORMAT_RGB8)
-	img.fill(Color(0.55, 0.27, 0.07))
-	$Sprite2D.texture = ImageTexture.create_from_image(img)
-	$Sprite2D.scale = Vector2(2, 2)
+	_tex_main = load("res://assets/objects/boat_world.png")
+	_tex_diagonal = load("res://assets/objects/boat_diagonal.png")
+	if _tex_main:
+		$Sprite2D.texture = _tex_main
+		$Sprite2D.scale = Vector2(0.082, 0.082)
+	else:
+		var img = Image.create(50, 30, false, Image.FORMAT_RGB8)
+		img.fill(Color(0.55, 0.27, 0.07))
+		$Sprite2D.texture = ImageTexture.create_from_image(img)
+		$Sprite2D.scale = Vector2(2, 2)
+	_prev_pos = position
 	$InteractArea.body_entered.connect(_on_area_entered)
 	$InteractArea.body_exited.connect(_on_area_exited)
 
 func _process(_delta):
-	if boarded_player_id == "":
-		return
-	var players = get_parent().get_parent().get_node_or_null("Players")
-	if !players:
-		return
-	var player_node = players.get_node_or_null(boarded_player_id)
-	if player_node:
-		position = player_node.position
+	if boarded_player_id != "":
+		var players = get_parent().get_parent().get_node_or_null("Players")
+		if players:
+			var player_node = players.get_node_or_null(boarded_player_id)
+			if player_node:
+				position = player_node.position
+
+	if _tex_diagonal and _tex_main:
+		var delta_pos = position - _prev_pos
+		if delta_pos.length() > 0.5:
+			if abs(delta_pos.x) > abs(delta_pos.y):
+				$Sprite2D.texture = _tex_diagonal
+				$Sprite2D.flip_h = delta_pos.x < 0
+			else:
+				$Sprite2D.texture = _tex_main
+				$Sprite2D.flip_h = false
+	_prev_pos = position
 
 func _is_on_water() -> bool:
 	var map = get_parent().get_parent().get_node_or_null("Map")
