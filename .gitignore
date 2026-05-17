@@ -13,3 +13,7 @@ export.cfg
 .mono/
 data_*/
 mono_crash.*.json
+
+godot-git-plugin-v3.2.1
+
+.claude/settings.local.json
