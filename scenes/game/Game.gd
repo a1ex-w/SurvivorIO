@@ -1,7 +1,7 @@
 extends Node
 
 func _process(_delta: float) -> void:
-	if Input.is_action_just_pressed("esc"):
+	if Input.is_action_just_pressed("esc") and get_tree().get_nodes_in_group("chat_open").is_empty():
 		if not %MainMenu.visible:
 			%MainMenu.show()
 			%MainMenu.open_settings()

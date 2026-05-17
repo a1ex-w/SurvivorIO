@@ -91,3 +91,16 @@ func decreasePlayerEnemyCount(pId) -> void:
 func _on_enemy_spawn_timer_timeout():
 	if multiplayer.is_server():
 		trySpawnEnemies()
+
+# Removes all world objects, enemies, and pickups server-side.
+# MultiplayerSpawner propagates despawns to clients automatically.
+func clear_world() -> void:
+	for c in $Objects.get_children(): c.queue_free()
+	for c in $Enemies.get_children(): c.queue_free()
+	for c in $Pickups.get_children(): c.queue_free()
+	spawnedEnemies.clear()
+	spawnedObjects = 0
+
+# Seeds the world with the initial object wave after a round reset.
+func spawn_initial_objects() -> void:
+	spawnObjects(initialSpawnObjects)

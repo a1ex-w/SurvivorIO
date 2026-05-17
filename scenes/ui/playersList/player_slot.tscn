@@ -5,8 +5,17 @@
 [node name="PlayerSlot" type="HBoxContainer"]
 script = ExtResource("1_nvol7")
 
+[node name="CrownLabel" type="Label" parent="."]
+custom_minimum_size = Vector2(22, 25)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(1.0, 0.85, 0.0, 1.0)
+text = "♛"
+horizontal_alignment = 1
+visible = false
+
 [node name="PlayerNameLabel" type="Label" parent="."]
-custom_minimum_size = Vector2(150, 25)
+custom_minimum_size = Vector2(128, 25)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 16
