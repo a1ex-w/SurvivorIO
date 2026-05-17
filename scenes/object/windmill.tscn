@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scenes/object/windmill.gd" id="1_windmill"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_windmill"]
-size = Vector2(70, 70)
+size = Vector2(128, 128)
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_windmill"]
 properties/0/path = NodePath(".:position")
@@ -17,7 +17,7 @@ script = ExtResource("1_windmill")
 texture_filter = 1
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, 22)
+position = Vector2(0, 0)
 shape = SubResource("RectangleShape2D_windmill")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]

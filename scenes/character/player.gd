@@ -369,8 +369,25 @@ func _place_selected(item_id: String, at: Vector2):
 		return
 	if !Inventory.checkHasItem(str(name), item_id):
 		return
+	if _placement_blocked(at):
+		return
 	Inventory.removeItem(str(name), item_id, 1)
 	Items.spawnPlaceableRpc.rpc(item_id, at)
+
+func _placement_blocked(at: Vector2) -> bool:
+	var space := get_world_2d().direct_space_state
+	var query := PhysicsShapeQueryParameters2D.new()
+	var shape := RectangleShape2D.new()
+	shape.size = Vector2(40, 40)
+	query.shape = shape
+	query.transform = Transform2D(0, at)
+	query.exclude = [get_rid()]
+	for result in space.intersect_shape(query, 4):
+		var collider = result.get("collider")
+		if collider is TileMap or collider is TileMapLayer:
+			continue
+		return true
+	return false
 
 func _on_drop_item() -> void:
 	var inv: Dictionary = Inventory.inventories.get(str(name), {})
