@@ -16,13 +16,8 @@ properties/0/replication_mode = 2
 [node name="Chest" type="StaticBody2D"]
 script = ExtResource("1_chest")
 
-[node name="ChestVisual" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(-20, -15, 20, -15, 20, 15, -20, 15)
-color = Color(0.588235, 0.392157, 0.196078, 1)
-
-[node name="LidStripe" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(-20, -15, 20, -15, 20, -8, -20, -8)
-color = Color(0.4, 0.26, 0.1, 1)
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_body")

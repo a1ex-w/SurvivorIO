@@ -4,6 +4,7 @@ var chest_inventory := {}
 var chest_ui_instance = null
 
 func _ready():
+	$Sprite2D.texture = load("res://assets/items/chest.png")
 	$InteractArea.body_entered.connect(_on_interact_area_body_entered)
 	$InteractArea.body_exited.connect(_on_interact_area_body_exited)
 
