@@ -80,6 +80,16 @@ func _ready():
 		inventory.player = self
 		$Camera2D.enabled = true
 	Multihelper.player_disconnected.connect(disconnected)
+	call_deferred("_init_crown")
+
+func _init_crown() -> void:
+	var pid := int(str(name))
+	if pid in Multihelper.spawnedPlayers:
+		$PlayerUi.setCrownWins(Multihelper.spawnedPlayers[pid].get("wins", 0))
+
+# Forwards the updated win count to the player's UI crown label.
+func update_crown(win_count: int) -> void:
+	$PlayerUi.setCrownWins(win_count)
 
 func visibilityFilter(id):
 	if id == int(str(name)):
@@ -136,8 +146,8 @@ func disconnected(id):
 	
 func _process(delta):
 	if str(multiplayer.get_unique_id()) == name:
-		var is_sprinting = Input.is_key_pressed(KEY_SHIFT) and stamina > 0 and not on_boat
-		var vel = Input.get_vector("walkLeft", "walkRight", "walkUp", "walkDown") * speed
+		var is_sprinting = Input.is_key_pressed(KEY_SHIFT) and stamina > 0 and not on_boat and not _is_chat_open()
+		var vel = Vector2.ZERO if _is_chat_open() else Input.get_vector("walkLeft", "walkRight", "walkUp", "walkDown") * speed
 		if is_sprinting and vel != Vector2.ZERO:
 			vel *= SPRINT_MULT
 			stamina = max(0.0, stamina - STAMINA_DRAIN * delta)
@@ -150,7 +160,7 @@ func _process(delta):
 		var mouse_position = get_global_mouse_position()
 		var direction_to_mouse = mouse_position - global_position
 		var angle = direction_to_mouse.angle()
-		var doingAction = Input.is_action_pressed("leftClickAction")
+		var doingAction = Input.is_action_pressed("leftClickAction") and not _is_chat_open()
 		moveProcess(vel, angle, doingAction)
 		var inputData = {
 			"vel": vel,
@@ -211,6 +221,12 @@ func handleAnims(vel, doing_action):
 	else:
 		$AnimationPlayer.stop()
 
+# Returns true while the chat input node is alive, used to suppress movement
+# and item actions so typed characters don't trigger game controls.
+func _is_chat_open() -> bool:
+	return inventory != null and is_instance_valid(inventory) \
+		and inventory.chatinput != null and is_instance_valid(inventory.chatinput)
+
 func _on_next_item():
 	inventory.nextSelection()
 
@@ -221,6 +237,8 @@ func _on_previous_item():
 # Handle input events
 func _unhandled_input(event):
 	if name != str(multiplayer.get_unique_id()):
+		return
+	if _is_chat_open():
 		return
 	if event.is_action_pressed("nextItem"):
 		_on_next_item()
@@ -407,9 +425,10 @@ func rewardPlayer(by):
 	if multiplayer.is_server():
 		var pid := int(str(name))
 		if pid in Multihelper.spawnedPlayers:
-			Multihelper.spawnedPlayers[pid]["score"] += by
-			_sync_score.rpc(Multihelper.spawnedPlayers[pid]["score"])
-			if Multihelper.spawnedPlayers[pid]["score"] >= Victories.WIN_SCORE:
+			var new_score: int = mini(Multihelper.spawnedPlayers[pid]["score"] + by, Victories.WIN_SCORE)
+			Multihelper.spawnedPlayers[pid]["score"] = new_score
+			_sync_score.rpc(new_score)
+			if new_score >= Victories.WIN_SCORE:
 				Multihelper.trigger_win(pid)
 
 @rpc("authority", "call_local", "reliable")
@@ -432,6 +451,17 @@ func getDamage(causer, amount, _type):
 	hp -= amount
 	if (hp - amount) <= 0 and causer.is_in_group("player"):
 		causer.player_killed.emit()
+
+# Restores full HP on all peers and teleports to a random walkable tile.
+# Called by the server at the start of each new round.
+@rpc("authority", "call_local", "reliable")
+func respawn() -> void:
+	hp = maxHP
+	if multiplayer.is_server():
+		var spawn_pos: Vector2 = Multihelper.map.tile_map.map_to_local(
+			Multihelper.map.walkable_tiles.pick_random()
+		)
+		sendPos.rpc(spawn_pos)
 
 func die():
 	if !multiplayer.is_server():

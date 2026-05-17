@@ -16,8 +16,11 @@ func makePlayerList():
 		%playerList.add_child(playerSlot)
 		playerSlot.playerId = player
 
+# Shows the win banner with a live 5-second countdown, then hides it.
+# Triggered by Multihelper.win_announced on all peers.
 func _on_win_announced(winner_name: String, win_count: int) -> void:
-	%WinBanner.text = "♛ %s wins! (%d total) — New round in 5s..." % [winner_name, win_count]
 	%WinBanner.visible = true
-	await get_tree().create_timer(6.0).timeout
+	for i in range(5, 0, -1):
+		%WinBanner.text = "♛ %s wins! (%d total) — New round in %ds..." % [winner_name, win_count, i]
+		await get_tree().create_timer(1.0).timeout
 	%WinBanner.visible = false

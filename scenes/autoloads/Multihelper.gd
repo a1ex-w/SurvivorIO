@@ -130,41 +130,76 @@ func _on_server_disconnected():
 	multiplayer.multiplayer_peer = null
 	server_disconnected.emit()
 
+# Called server-side when a player's score hits WIN_SCORE.
+# Records the win, syncs crown UI, broadcasts the announcement, waits
+# 5 seconds, then triggers a full round reset. _win_pending prevents
+# a second winner being recorded during the 5s cooldown.
 func trigger_win(winner_pid: int) -> void:
 	if not multiplayer.is_server() or _win_pending:
 		return
 	_win_pending = true
 	var winner_name: String = spawnedPlayers[winner_pid]["name"]
 	var win_count := Victories.add_win(winner_name)
-	# Update wins in spawnedPlayers so leaderboard refreshes
 	spawnedPlayers[winner_pid]["wins"] = win_count
-	player_score_updated.emit()
-	# Broadcast announcement
+	_sync_wins.rpc(winner_pid, win_count)
 	_broadcast_win.rpc(winner_name, win_count)
-	# Wait then reset
 	await get_tree().create_timer(5.0).timeout
 	_reset_round.rpc()
 	_win_pending = false
 
+# Syncs a player's updated win count to all peers and refreshes their crown.
+@rpc("authority", "call_local", "reliable")
+func _sync_wins(pid: int, win_count: int) -> void:
+	if pid in spawnedPlayers:
+		spawnedPlayers[pid]["wins"] = win_count
+	player_score_updated.emit()
+	var player_node := get_node_or_null("/root/Game/Level/Main/Players/" + str(pid))
+	if player_node:
+		player_node.update_crown(win_count)
+
+# Emits win_announced so the HUD can display the win banner on all peers.
 @rpc("authority", "call_local", "reliable")
 func _broadcast_win(winner_name: String, win_count: int) -> void:
 	win_announced.emit(winner_name, win_count)
 
+# Resets all player scores, clears world objects, and regenerates the map.
+# Only runs logic on the server; score resets are broadcast to clients via
+# _sync_score so leaderboard stays in sync.
 @rpc("authority", "call_local", "reliable")
 func _reset_round() -> void:
-	if multiplayer.is_server():
-		# Reset all scores server-side and broadcast each to clients
-		for pid in spawnedPlayers:
-			spawnedPlayers[pid]["score"] = 0
-			var player_node := get_node_or_null("/root/Game/Level/Main/Players/" + str(pid))
-			if player_node:
-				player_node._sync_score.rpc(0)
-		player_score_updated.emit()
-		# Reset map
-		mapSeed = randi()
-		var m := get_node_or_null("/root/Game/Level/Main")
-		if m:
-			m.reset_round()
+	if not multiplayer.is_server():
+		return
+	for pid in spawnedPlayers:
+		spawnedPlayers[pid]["score"] = 0
+		var player_node := get_node_or_null("/root/Game/Level/Main/Players/" + str(pid))
+		if player_node:
+			player_node._sync_score.rpc(0)
+	player_score_updated.emit()
+	# MultiplayerSpawner automatically despawns cleared objects on clients.
+	var m := get_node_or_null("/root/Game/Level/Main")
+	if m:
+		m.clear_world()
+	var new_seed := randi()
+	mapSeed = new_seed
+	_regen_map.rpc(new_seed)
+
+# Runs on all peers: regenerates the map with the new seed so terrain is
+# identical everywhere. Server also spawns initial objects and respawns players.
+@rpc("authority", "call_local", "reliable")
+func _regen_map(new_seed: int) -> void:
+	mapSeed = new_seed
+	var m := get_node_or_null("/root/Game/Level/Main")
+	if m:
+		m.get_node("Map").generateMap()
+	if multiplayer.is_server() and m:
+		m.spawn_initial_objects()
+		for player in m.get_node("Players").get_children():
+			var pid_str: String = player.name
+			Inventory.inventories[pid_str] = {}
+			Inventory.durabilities.erase(pid_str)
+			Inventory.inventoryUpdated.emit(pid_str)
+			player.unequipItem.rpc()
+			player.respawn.rpc()
 
 func loadMap():
 	main = get_node("/root/Game/Level/Main")
