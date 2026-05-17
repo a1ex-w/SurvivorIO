@@ -22,6 +22,7 @@ texture_filter = 1
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_1")
+disabled = true
 
 [node name="PointLight2D" type="PointLight2D" parent="."]
 scale = Vector2(2, 2)

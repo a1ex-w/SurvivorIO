@@ -232,6 +232,8 @@ func _on_interact():
 		var at := get_global_mouse_position()
 		if selected in SNAPPED:
 			at = (at / WALL_SNAP).round() * WALL_SNAP
+		else:
+			at = _clamp_place_range(at, 50.0)
 		if multiplayer.is_server():
 			_place_selected(selected, at)
 		else:
