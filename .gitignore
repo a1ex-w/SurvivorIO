@@ -14,10 +14,8 @@ export.cfg
 data_*/
 mono_crash.*.json
 
+# Local tools and editor config
+addons/
+.claude/
 godot-git-plugin-v3.2.1
-
-.claude/settings.local.json
-
-addons/godot_mcp
-
-project.godot
+CLAUDE.md
