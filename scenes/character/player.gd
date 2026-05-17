@@ -195,6 +195,11 @@ func _on_interact():
 			nearby_chest.close_ui()
 		else:
 			nearby_chest.open_ui()
+	elif equippedItem == "torch" and Inventory.checkHasItem(str(name), "torch") and not _is_water_position(get_global_mouse_position()):
+		if multiplayer.is_server():
+			placeTorch(get_global_mouse_position())
+		else:
+			placeTorch.rpc_id(1, get_global_mouse_position())
 	elif Inventory.checkHasItem(str(name), "boat"):
 		if multiplayer.is_server():
 			placeBoat(get_global_mouse_position())
@@ -264,6 +269,15 @@ func placeChest(at: Vector2):
 		return
 	Inventory.removeItem(str(name), "chest", 1)
 	Items.spawnPlaceableRpc.rpc("chest", at)
+
+@rpc("any_peer", "call_remote", "reliable")
+func placeTorch(at: Vector2):
+	if !multiplayer.is_server():
+		return
+	if !Inventory.checkHasItem(str(name), "torch"):
+		return
+	Inventory.removeItem(str(name), "torch", 1)
+	Items.spawnPlaceableRpc.rpc("torch", at)
 
 func punchCheckCollision():
 	var id = multiplayer.get_unique_id()
