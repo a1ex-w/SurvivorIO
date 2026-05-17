@@ -5,7 +5,7 @@ var chest_ui_instance = null
 
 func _ready():
 	$Sprite2D.texture = load("res://assets/objects/chest_world.png")
-	$Sprite2D.scale = Vector2(0.525, 0.525)
+	$Sprite2D.scale = Vector2(0.041, 0.041)
 	$InteractArea.body_entered.connect(_on_interact_area_body_entered)
 	$InteractArea.body_exited.connect(_on_interact_area_body_exited)
 
