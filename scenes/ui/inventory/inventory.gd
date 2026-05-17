@@ -14,12 +14,14 @@ func _ready():
 	populateSlots()
 
 func _unhandled_input(event):
+	if not event is InputEventKey:
+		return
 	if event.is_action_pressed("craftMenu"):
 		_on_craft_button_pressed()
-	if Input.is_action_pressed("esc"):
+	if event.is_action_pressed("esc"):
 		if is_instance_valid(chatinput):
 			chatinput.queue_free()
-	if Input.is_action_pressed("chat"):
+	if event.is_action_pressed("chat"):
 		if is_instance_valid(chatinput):
 			if chatinput.text:
 				player.sendMessage.rpc_id(1,chatinput.text)

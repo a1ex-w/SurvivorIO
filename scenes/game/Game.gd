@@ -1,8 +1,14 @@
 extends Node
 
+func _process(_delta: float) -> void:
+	if Input.is_action_just_pressed("esc"):
+		if not %MainMenu.visible:
+			%MainMenu.show()
+			%MainMenu.open_settings()
+
 func start_game():
 	# Hide the UI and unpause to start the game.
-	%MainMenu.queue_free()
+	%MainMenu.hide()
 	get_tree().paused = false
 	# Only change level on the server.
 	# Clients will instantiate the level via the spawner.
