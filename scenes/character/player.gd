@@ -14,6 +14,8 @@ signal player_killed
 		characterFile = value
 		$MovingParts/Sprite2D.texture = load("res://assets/characters/bodies/"+value)
 		
+const WALL_SNAP := 64.0
+
 var inventory : Control
 var nearby_chest = null
 var nearby_boat = null
@@ -211,15 +213,17 @@ func _on_interact():
 		else:
 			placeChest.rpc_id(1, get_global_mouse_position())
 	elif Inventory.checkHasItem(str(name), "wall"):
+		var snapped = (get_global_mouse_position() / WALL_SNAP).round() * WALL_SNAP
 		if multiplayer.is_server():
-			placeWall(get_global_mouse_position())
+			placeWall(snapped)
 		else:
-			placeWall.rpc_id(1, get_global_mouse_position())
+			placeWall.rpc_id(1, snapped)
 	elif Inventory.checkHasItem(str(name), "stone_wall"):
+		var snapped = (get_global_mouse_position() / WALL_SNAP).round() * WALL_SNAP
 		if multiplayer.is_server():
-			placeStoneWall(get_global_mouse_position())
+			placeStoneWall(snapped)
 		else:
-			placeStoneWall.rpc_id(1, get_global_mouse_position())
+			placeStoneWall.rpc_id(1, snapped)
 
 func _board(boat):
 	on_boat = true
