@@ -44,9 +44,13 @@ func set_boarded(player_id: String):
 	boarded_player_id = player_id
 	$InteractLabel.text = "Press E to disembark" if player_id != "" else "Press E to board"
 
-@rpc("any_peer", "call_local", "reliable")
+@rpc("any_peer", "call_remote", "reliable")
 func pickup(player_id: String):
 	if !multiplayer.is_server():
 		return
 	Inventory.addItem(player_id, "boat", 1)
+	destroySelf.rpc()
+
+@rpc("authority", "call_local", "reliable")
+func destroySelf():
 	queue_free()

@@ -199,6 +199,8 @@ func _board(boat):
 	on_boat = true
 	current_boat = boat
 	collision_mask = 0
+	position = boat.position
+	sendPos.rpc(position)
 	boat.set_boarded.rpc(str(name))
 
 func _disembark():
