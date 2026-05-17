@@ -133,18 +133,30 @@ func moveServer(vel, angle, doingAction):
 func sendPos(pos):
 	position = pos
 
+const MAP_BORDER_MARGIN := 32.0
+const MAP_WORLD_SIZE := Vector2(
+	Constants.MAP_SIZE.x * 64.0,
+	Constants.MAP_SIZE.y * 64.0
+)
+
+func _clamp_to_map() -> void:
+	position.x = clampf(position.x, MAP_BORDER_MARGIN, MAP_WORLD_SIZE.x - MAP_BORDER_MARGIN)
+	position.y = clampf(position.y, MAP_BORDER_MARGIN, MAP_WORLD_SIZE.y - MAP_BORDER_MARGIN)
+
 func moveProcess(vel, angle, doingAction):
 	if on_boat:
 		if vel != Vector2.ZERO:
 			var new_pos = position + vel * get_process_delta_time()
 			if _is_water_position(new_pos):
 				position = new_pos
+				_clamp_to_map()
 		$MovingParts.rotation = angle
 		handleAnims(vel, doingAction)
 		return
 	velocity = vel
 	if velocity != Vector2.ZERO:
 		move_and_slide()
+		_clamp_to_map()
 	$MovingParts.rotation = angle
 	handleAnims(vel, doingAction)
 
