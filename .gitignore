@@ -15,17 +15,7 @@ data_*/
 mono_crash.*.json
 
 # Local tools and editor config
-# Ignore all of addons/ except the MCP bridge stub. Git requires each parent
-# directory to be explicitly un-ignored — you can't un-ignore a file inside
-# an ignored directory without un-ignoring the path step by step.
-# The stub ensures the server never crashes with "File not found" if
-# project.godot gets re-written to point to the addon path directly.
-addons/*
-!addons/godot_mcp/
-addons/godot_mcp/*
-!addons/godot_mcp/game_bridge/
-addons/godot_mcp/game_bridge/*
-!addons/godot_mcp/game_bridge/mcp_game_bridge.gd
+addons/
 .claude/
 godot-git-plugin-v3.2.1
 CLAUDE.md
