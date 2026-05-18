@@ -1,20 +1,40 @@
 extends Control
 
+# Maps player ID -> player_slot node for in-place score updates.
+var _slot_cache: Dictionary = {}
+
 func _ready():
 	makePlayerList()
 	Multihelper.player_registered.connect(makePlayerList)
 	Multihelper.player_despawned.connect(makePlayerList)
-	Multihelper.player_score_updated.connect(makePlayerList)
+	Multihelper.player_score_updated.connect(refreshPlayerList)
 	Multihelper.win_announced.connect(_on_win_announced)
 
+func _exit_tree():
+	Multihelper.player_registered.disconnect(makePlayerList)
+	Multihelper.player_despawned.disconnect(makePlayerList)
+	Multihelper.player_score_updated.disconnect(refreshPlayerList)
+	if Multihelper.win_announced.is_connected(_on_win_announced):
+		Multihelper.win_announced.disconnect(_on_win_announced)
+
+# Full rebuild — called only when players join or leave.
 func makePlayerList():
 	for c in %playerList.get_children():
 		c.queue_free()
+	_slot_cache.clear()
 	for player in Multihelper.spawnedPlayers.keys():
 		var playerSlotScene := preload("res://scenes/ui/playersList/player_slot.tscn")
 		var playerSlot := playerSlotScene.instantiate()
 		%playerList.add_child(playerSlot)
 		playerSlot.playerId = player
+		_slot_cache[player] = playerSlot
+
+# Lightweight refresh — updates labels in existing slots without rebuilding.
+func refreshPlayerList():
+	for player_id in _slot_cache:
+		var slot = _slot_cache[player_id]
+		if is_instance_valid(slot):
+			slot.playerId = player_id
 
 # Shows the win banner with a live 5-second countdown, then hides it.
 # Triggered by Multihelper.win_announced on all peers.
