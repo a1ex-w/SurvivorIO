@@ -19,11 +19,11 @@ func _apply_state():
 	$Sprite2D.modulate.a = 0.35 if is_open else 1.0
 	$InteractLabel.text = "Press E to close" if is_open else "Press E to open"
 
-func interact(player_id: String):
+func interact(player: Node) -> void:
 	if multiplayer.is_server():
 		is_open = !is_open
 	else:
-		request_toggle.rpc_id(1, player_id)
+		request_toggle.rpc_id(1, str(player.name))
 
 @rpc("any_peer", "call_local", "reliable")
 func request_toggle(_player_id: String):
@@ -33,10 +33,11 @@ func request_toggle(_player_id: String):
 
 func _on_body_entered(body):
 	if body.is_in_group("player") and body.name == str(multiplayer.get_unique_id()):
-		body.nearby_door = self
+		body.set_nearby_interactable(self)
 		$InteractLabel.visible = true
 
 func _on_body_exited(body):
 	if body.is_in_group("player") and body.name == str(multiplayer.get_unique_id()):
-		body.nearby_door = null
+		if body.nearby_interactable == self:
+			body.nearby_interactable = null
 		$InteractLabel.visible = false

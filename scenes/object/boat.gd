@@ -64,15 +64,25 @@ func _is_on_water() -> bool:
 	var atlas = map.tile_map.get_cell_atlas_coords(0, tile_pos)
 	return atlas in Constants.WATER_TILES
 
+func interact(player: Node) -> void:
+	if _is_on_water():
+		player.board(self)
+	else:
+		if multiplayer.is_server():
+			pickup(str(player.name))
+		else:
+			pickup.rpc_id(1, str(player.name))
+
 func _on_area_entered(body):
 	if body.is_in_group("player") and body.name == str(multiplayer.get_unique_id()):
-		body.nearby_boat = self
+		body.set_nearby_interactable(self)
 		$InteractLabel.text = "Press E to board" if _is_on_water() else "Press E to pick up"
 		$InteractLabel.visible = true
 
 func _on_area_exited(body):
 	if body.is_in_group("player") and body.name == str(multiplayer.get_unique_id()):
-		body.nearby_boat = null
+		if body.nearby_interactable == self:
+			body.nearby_interactable = null
 		$InteractLabel.visible = false
 
 @rpc("any_peer", "call_local", "reliable")
