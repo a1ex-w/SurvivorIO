@@ -11,7 +11,7 @@ const DEFAULT_COLOR := Color(1.0, 1.0, 1.0, 0.2)   # White color for non-walkabl
 var drawn = false
 
 func _ready():
-	tilemap = get_node("../../../../../Map/TileMap")
+	tilemap = Multihelper.map.tile_map if Multihelper.map else null
 	custom_minimum_size = minimap_size
 
 func _draw():
