@@ -171,7 +171,7 @@ func _process(delta):
 		var mouse_position = get_global_mouse_position()
 		var direction_to_mouse = mouse_position - global_position
 		var angle = direction_to_mouse.angle()
-		var doingAction = Input.is_action_pressed("leftClickAction")
+		var doingAction = Input.is_action_pressed("leftClickAction") and not _is_chat_open()
 		moveProcess(vel, angle, doingAction)
 		var inputData = {
 			"vel": vel,
@@ -249,6 +249,8 @@ func _on_previous_item():
 func _unhandled_input(event):
 	if not is_local:
 		return
+	if _is_chat_open():
+		return
 	if event.is_action_pressed("nextItem"):
 		_on_next_item()
 	elif event.is_action_pressed("previousItem"):
@@ -259,6 +261,8 @@ func _unhandled_input(event):
 		var key = event.physical_keycode
 		if key >= KEY_1 and key <= KEY_9:
 			inventory.setSelection(key - KEY_1)
+		elif key == KEY_Q:
+			_on_drop_item()
 
 func _get_selected_item() -> String:
 	var inv: Dictionary = Inventory.inventories.get(str(name), {})
@@ -364,6 +368,33 @@ func _place_selected(item_id: String, at: Vector2):
 	Inventory.removeItem(str(name), item_id, 1)
 	Items.spawnPlaceableRpc.rpc(item_id, at)
 
+func _on_drop_item() -> void:
+	var inv: Dictionary = Inventory.inventories.get(str(name), {})
+	if inv.is_empty():
+		return
+	var keys: Array = inv.keys()
+	if inventory.selectedSlot >= keys.size():
+		return
+	var item: String = keys[inventory.selectedSlot]
+	if multiplayer.is_server():
+		dropItem(item)
+	else:
+		dropItem.rpc_id(1, item)
+
+@rpc("any_peer", "call_remote", "reliable")
+func dropItem(item: String):
+	if !multiplayer.is_server():
+		return
+	if !Inventory.checkHasItem(str(name), item):
+		return
+	Inventory.removeItem(str(name), item, 1)
+	var pickups := get_node("/root/Game/Level/Main/Pickups")
+	var pickup: Area2D = preload("res://scenes/item/pickup.tscn").instantiate()
+	pickup.itemId = item
+	pickup.position = position
+	pickup.dropper_id = str(name)
+	pickups.call_deferred("add_child", pickup, true)
+
 func punchCheckCollision():
 	var id = multiplayer.get_unique_id()
 	if spawnsProjectile:
@@ -383,13 +414,19 @@ func sendProjectile(towards):
 	Items.spawnProjectile(self, spawnsProjectile, towards, "damageable")
 
 @rpc("authority", "call_local", "reliable")
-func increaseScore(by):
+func rewardPlayer(by):
 	hp += by * 5
 	maxHP += by * 5
 	attackDamage += by
 	speed += by
-	Multihelper.spawnedPlayers[int(str(name))]["score"] += by
-	Multihelper.player_score_updated.emit()
+	if multiplayer.is_server():
+		var pid := int(str(name))
+		if pid in Multihelper.spawnedPlayers:
+			var new_score: int = Multihelper.spawnedPlayers[pid]["score"] + by
+			Multihelper.spawnedPlayers[pid]["score"] = new_score
+			_sync_score.rpc(new_score)
+			if new_score >= Victories.WIN_SCORE:
+				Multihelper.trigger_win(pid)
 
 @rpc("authority", "call_local", "reliable")
 func _sync_score(new_score: int) -> void:
@@ -399,18 +436,29 @@ func _sync_score(new_score: int) -> void:
 	Multihelper.player_score_updated.emit()
 
 func objectDestroyed():
-	increaseScore.rpc(Constants.OBJECT_SCORE_GAIN)
+	rewardPlayer.rpc(Constants.OBJECT_SCORE_GAIN)
 
 func mobKilled():
-	increaseScore.rpc(Constants.MOB_SCORE_GAIN)
+	rewardPlayer.rpc(Constants.MOB_SCORE_GAIN)
 
 func enemyPlayerKilled():
-	increaseScore.rpc(Constants.PK_SCORE_GAIN)
+	rewardPlayer.rpc(Constants.PK_SCORE_GAIN)
 
 func getDamage(causer, amount, _type):
 	hp -= amount
 	if (hp - amount) <= 0 and causer.is_in_group("player"):
 		causer.player_killed.emit()
+
+# Restores full HP on all peers and teleports to a random walkable tile.
+# Called by the server at the start of each new round.
+@rpc("authority", "call_local", "reliable")
+func respawn() -> void:
+	hp = maxHP
+	if multiplayer.is_server():
+		var spawn_pos: Vector2 = Multihelper.map.tile_map.map_to_local(
+			Multihelper.map.walkable_tiles.pick_random()
+		)
+		sendPos.rpc(spawn_pos)
 
 func die():
 	if !multiplayer.is_server():
@@ -432,7 +480,7 @@ func dropInventory():
 
 @rpc("any_peer", "call_local", "reliable")
 func tryEquipItem(id):
-	if id in Inventory.inventories[name].keys():
+	if name in Inventory.inventories and id in Inventory.inventories[name]:
 		equipItem.rpc(id)
 
 @rpc("any_peer", "call_local", "reliable")
