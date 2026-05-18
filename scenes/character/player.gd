@@ -195,9 +195,9 @@ func _unhandled_input(event):
 			inventory.setSelection(key - KEY_1)
 
 func _get_selected_item() -> String:
-	var inv := Inventory.inventories.get(str(name), {})
-	var keys := inv.keys()
-	var slot := inventory.selectedSlot if inventory else 0
+	var inv: Dictionary = Inventory.inventories.get(str(name), {})
+	var keys: Array = inv.keys()
+	var slot: int = inventory.selectedSlot if inventory else 0
 	return keys[slot] if slot < keys.size() else ""
 
 func _on_interact():
