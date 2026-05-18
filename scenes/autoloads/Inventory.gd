@@ -1,7 +1,11 @@
 extends Node
 
+# Emitted server-side on any inventory mutation. Server _ready() connects
+# this to sendToPeer so clients always receive the authoritative state.
 signal inventoryUpdated(id)
 signal itemRemoved(id, item)
+# Emitted client-side after setInventory RPC is received from the server.
+# UI components (inventory panel, chest UI) connect here to refresh display.
 signal updateReceived(id)
 
 var inventories := {}
