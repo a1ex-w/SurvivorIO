@@ -17,6 +17,7 @@ signal player_killed
 const WALL_SNAP := 64.0
 
 var inventory : Control
+var is_local := false
 var nearby_chest = null
 var nearby_boat = null
 var nearby_door = null
@@ -75,7 +76,8 @@ func _ready():
 		mob_killed.connect(mobKilled)
 		player_killed.connect(enemyPlayerKilled)
 		object_destroyed.connect(objectDestroyed)
-	if name == str(multiplayer.get_unique_id()):
+	is_local = (name == str(multiplayer.get_unique_id()))
+	if is_local:
 		inventory = get_parent().get_parent().get_node("HUD/Inventory")
 		inventory.player = self
 		$Camera2D.enabled = true
@@ -145,7 +147,7 @@ func disconnected(id):
 		die()
 	
 func _process(delta):
-	if str(multiplayer.get_unique_id()) == name:
+	if is_local:
 		var is_sprinting = Input.is_key_pressed(KEY_SHIFT) and stamina > 0 and not on_boat and not _is_chat_open()
 		var vel = Vector2.ZERO if _is_chat_open() else Input.get_vector("walkLeft", "walkRight", "walkUp", "walkDown") * speed
 		if is_sprinting and vel != Vector2.ZERO:
@@ -236,7 +238,7 @@ func _on_previous_item():
 
 # Handle input events
 func _unhandled_input(event):
-	if name != str(multiplayer.get_unique_id()):
+	if not is_local:
 		return
 	if _is_chat_open():
 		return
