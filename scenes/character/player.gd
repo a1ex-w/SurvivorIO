@@ -84,6 +84,10 @@ func _ready():
 	Multihelper.player_disconnected.connect(disconnected)
 	call_deferred("_init_crown")
 
+func _exit_tree():
+	if Multihelper.player_disconnected.is_connected(disconnected):
+		Multihelper.player_disconnected.disconnect(disconnected)
+
 func _init_crown() -> void:
 	var pid := int(str(name))
 	if pid in Multihelper.spawnedPlayers:

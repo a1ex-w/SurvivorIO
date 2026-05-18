@@ -10,6 +10,13 @@ func _ready():
 	Multihelper.player_score_updated.connect(refreshPlayerList)
 	Multihelper.win_announced.connect(_on_win_announced)
 
+func _exit_tree():
+	Multihelper.player_registered.disconnect(makePlayerList)
+	Multihelper.player_despawned.disconnect(makePlayerList)
+	Multihelper.player_score_updated.disconnect(refreshPlayerList)
+	if Multihelper.win_announced.is_connected(_on_win_announced):
+		Multihelper.win_announced.disconnect(_on_win_announced)
+
 # Full rebuild — called only when players join or leave.
 func makePlayerList():
 	for c in %playerList.get_children():
