@@ -317,46 +317,45 @@ func _clamp_place_range(target: Vector2, max_dist: float) -> Vector2:
 		offset = offset.normalized() * max_dist
 	return global_position + offset
 
+func _get_map():
+	return get_parent().get_parent().get_node_or_null("Map")
+
 func _has_nearby_land(world_pos: Vector2, max_px: float) -> bool:
-	var map = get_parent().get_parent().get_node_or_null("Map")
+	var map = _get_map()
 	if !map:
 		return false
-	var land_coords = [Vector2i(0,0), Vector2i(1,0), Vector2i(2,0),
-					   Vector2i(3,0), Vector2i(16,0), Vector2i(17,0)]
 	var tile_pos = map.tile_map.local_to_map(world_pos)
-	var max_tiles := int(ceil(max_px / 64.0)) + 1
+	var max_tiles := int(ceil(max_px / Constants.TILE_SIZE)) + 1
 	for radius in range(0, max_tiles + 1):
 		for dx in range(-radius, radius + 1):
 			for dy in range(-radius, radius + 1):
 				if abs(dx) == radius or abs(dy) == radius:
 					var check: Vector2i = tile_pos + Vector2i(dx, dy)
-					if map.tile_map.get_cell_atlas_coords(0, check) in land_coords:
+					if map.tile_map.get_cell_atlas_coords(0, check) in Constants.LAND_TILES:
 						var land_world: Vector2 = map.tile_map.map_to_local(check)
 						if world_pos.distance_to(land_world) <= max_px:
 							return true
 	return false
 
 func _is_water_position(world_pos: Vector2) -> bool:
-	var map = get_parent().get_parent().get_node_or_null("Map")
+	var map = _get_map()
 	if !map:
 		return false
 	var tile_pos = map.tile_map.local_to_map(world_pos)
 	var atlas = map.tile_map.get_cell_atlas_coords(0, tile_pos)
-	return atlas in [Vector2i(18, 0), Vector2i(19, 0)]
+	return atlas in Constants.WATER_TILES
 
 func _find_nearest_land(world_pos: Vector2) -> Vector2:
-	var map = get_parent().get_parent().get_node_or_null("Map")
+	var map = _get_map()
 	if !map:
 		return world_pos
-	var land_coords = [Vector2i(0,0), Vector2i(1,0), Vector2i(2,0),
-					   Vector2i(3,0), Vector2i(16,0), Vector2i(17,0)]
 	var tile_pos = map.tile_map.local_to_map(world_pos)
 	for radius in range(1, 15):
 		for dx in range(-radius, radius + 1):
 			for dy in range(-radius, radius + 1):
 				if abs(dx) == radius or abs(dy) == radius:
 					var check = tile_pos + Vector2i(dx, dy)
-					if map.tile_map.get_cell_atlas_coords(0, check) in land_coords:
+					if map.tile_map.get_cell_atlas_coords(0, check) in Constants.LAND_TILES:
 						return map.tile_map.map_to_local(check)
 	return world_pos
 
