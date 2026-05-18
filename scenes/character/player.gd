@@ -17,9 +17,7 @@ signal player_killed
 const WALL_SNAP := 64.0
 
 var inventory : Control
-var nearby_chest = null
-var nearby_boat = null
-var nearby_door = null
+var nearby_interactable = null
 var on_boat := false
 var current_boat = null
 
@@ -206,22 +204,8 @@ func _on_interact():
 	if on_boat:
 		if _has_nearby_land(position, Constants.DISEMBARK_RANGE):
 			_disembark()
-	elif nearby_boat and is_instance_valid(nearby_boat):
-		if _is_water_position(nearby_boat.position):
-			_board(nearby_boat)
-		else:
-			if multiplayer.is_server():
-				nearby_boat.pickup(str(name))
-			else:
-				nearby_boat.pickup.rpc_id(1, str(name))
-			nearby_boat = null
-	elif nearby_door and is_instance_valid(nearby_door):
-		nearby_door.interact(str(multiplayer.get_unique_id()))
-	elif nearby_chest and is_instance_valid(nearby_chest):
-		if nearby_chest.chest_ui_instance and is_instance_valid(nearby_chest.chest_ui_instance):
-			nearby_chest.close_ui()
-		else:
-			nearby_chest.open_ui()
+	elif nearby_interactable and is_instance_valid(nearby_interactable):
+		nearby_interactable.interact(self)
 	else:
 		var selected := _get_selected_item()
 		if selected not in Items.placeables:
@@ -238,7 +222,7 @@ func _on_interact():
 		else:
 			_place_selected.rpc_id(1, selected, at)
 
-func _board(boat):
+func board(boat):
 	on_boat = true
 	current_boat = boat
 	collision_mask = 0

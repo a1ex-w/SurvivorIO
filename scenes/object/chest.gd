@@ -23,14 +23,21 @@ func close_ui():
 		chest_ui_instance.queue_free()
 		chest_ui_instance = null
 
+func interact(_player) -> void:
+	if chest_ui_instance and is_instance_valid(chest_ui_instance):
+		close_ui()
+	else:
+		open_ui()
+
 func _on_interact_area_body_entered(body):
 	if body.is_in_group("player") and body.name == str(multiplayer.get_unique_id()):
-		body.nearby_chest = self
+		body.nearby_interactable = self
 		$InteractLabel.visible = true
 
 func _on_interact_area_body_exited(body):
 	if body.is_in_group("player") and body.name == str(multiplayer.get_unique_id()):
-		body.nearby_chest = null
+		if body.nearby_interactable == self:
+			body.nearby_interactable = null
 		$InteractLabel.visible = false
 		close_ui()
 
