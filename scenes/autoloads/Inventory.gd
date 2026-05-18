@@ -16,8 +16,11 @@ func _ready():
 
 func sendToPeer(id):
 	if multiplayer.is_server():
+		var peer_id := int(str(id))
+		if peer_id not in multiplayer.get_peers():
+			return
 		var durabilityData = durabilities[id] if id in durabilities else {}
-		setInventory.rpc_id(int(str(id)), id, inventories[id], durabilityData)
+		setInventory.rpc_id(peer_id, id, inventories[id], durabilityData)
 
 @rpc("any_peer", "call_remote", "reliable")
 func setInventory(id, data, durabilityData):

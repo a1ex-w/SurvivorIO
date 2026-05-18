@@ -26,7 +26,7 @@ func _process(_delta):
 		var players = get_parent().get_parent().get_node_or_null("Players")
 		if players:
 			var player_node = players.get_node_or_null(boarded_player_id)
-			if player_node:
+			if is_instance_valid(player_node):
 				position = player_node.position
 
 	if _tex_main:
@@ -62,7 +62,7 @@ func _is_on_water() -> bool:
 		return false
 	var tile_pos = map.tile_map.local_to_map(position)
 	var atlas = map.tile_map.get_cell_atlas_coords(0, tile_pos)
-	return atlas in [Vector2i(18, 0), Vector2i(19, 0)]
+	return atlas in Constants.WATER_TILES
 
 func _on_area_entered(body):
 	if body.is_in_group("player") and body.name == str(multiplayer.get_unique_id()):

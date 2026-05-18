@@ -1,6 +1,6 @@
 extends Control
 
-const WALKABLE_TILES := [Vector2i(0,0), Vector2i(1,0), Vector2i(2,0), Vector2i(3,0), Vector2i(16,0), Vector2i(17,0)]
+const WALKABLE_TILES = Constants.LAND_TILES
 const WALKABLE_COLOR := Color(0.0, 1.0, 0.0)  # Green color for walkable tiles
 const DEFAULT_COLOR := Color(1.0, 1.0, 1.0, 0.2)   # White color for non-walkable tiles
 
