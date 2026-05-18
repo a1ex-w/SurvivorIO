@@ -86,7 +86,7 @@ func decreasePlayerEnemyCount(pId) -> void:
 	if pId in spawnedEnemies:
 		spawnedEnemies[pId] -= 1
 	else:
-		spawnedEnemies[pId] = 1
+		spawnedEnemies[pId] = 0
 
 func _on_enemy_spawn_timer_timeout():
 	if multiplayer.is_server():

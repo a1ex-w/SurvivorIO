@@ -8,14 +8,20 @@ const TRUSTED_CHAIN_PATH := ""
 const PRIVATE_KEY_PATH := ""
 
 #Map
-const MAP_SIZE := Vector2i(64,64) # see map.gd for tileset specific constants
+const MAP_SIZE := Vector2i(64,64)
+const TILE_SIZE := 64
+const LAND_TILES: Array[Vector2i] = [
+	Vector2i(0,0), Vector2i(1,0), Vector2i(2,0), Vector2i(3,0),
+	Vector2i(16,0), Vector2i(17,0)
+]
+const WATER_TILES: Array[Vector2i] = [Vector2i(18,0), Vector2i(19,0)]
 const MAX_OBJECTS := 30
-const MAX_ENEMIES_PER_PLAYER := 2 # see main.gd for more object and enemy spawner constants
+const MAX_ENEMIES_PER_PLAYER := 2
 
 #Player
 const MAX_INVENTORY_SLOTS := 9
 const OBJECT_SCORE_GAIN := 1
 const MOB_SCORE_GAIN := 2
 const PK_SCORE_GAIN := 4
-# more player related consts are in player.gd
-# Item, object and equipment data is in "Items" autoload.
+const DISEMBARK_RANGE := 45.0
+const TORCH_REPEL_RADIUS := 200.0

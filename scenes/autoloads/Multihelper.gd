@@ -1,7 +1,6 @@
 extends Node
 
 var playerScenePath = preload("res://scenes/character/player.tscn")
-var isHost = false
 var mapSeed = randi()
 var map: Node2D
 var main: Node2D
@@ -22,7 +21,6 @@ const PORT = Constants.PORT
 
 var spawnedPlayers = {}
 var connectedPlayers = []
-var syncedPlayers = []
 
 var player_info = {"name": ""}
 
@@ -89,7 +87,6 @@ func _deregister_character(id):
 func _on_player_disconnected(id):
 	connectedPlayers.erase(id)
 	spawnedPlayers.erase(id)
-	syncedPlayers.erase(id)
 	player_disconnected.emit(id)
 
 func _on_connected_ok():
@@ -105,13 +102,9 @@ func load_main_game():
 @rpc("any_peer", "call_local", "reliable")
 func player_loaded():
 	var sender_id = multiplayer.get_remote_sender_id()
-	#print("remote sender:"+str(sender_id))
 	main = game.get_node("Level/Main")
-	var mapData := {
-		"seed": mapSeed,
-	}
+	var mapData := {"seed": mapSeed}
 	sendGameData.rpc_id(sender_id, spawnedPlayers, mapData)
-	#print(connectedPlayers)
 	set_process(false)
 
 @rpc("authority", "call_remote", "reliable")

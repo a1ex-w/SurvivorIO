@@ -18,22 +18,29 @@ const WALL_SNAP := 64.0
 
 var inventory : Control
 var is_local := false
-var nearby_chest = null
-var nearby_boat = null
-var nearby_door = null
+var nearby_interactable = null
 var on_boat := false
 var current_boat = null
+
+# Called by interactables on body_entered. Hides the previous interactable's
+# label so only one prompt is ever visible at a time.
+func set_nearby_interactable(obj) -> void:
+	if nearby_interactable and is_instance_valid(nearby_interactable) \
+			and nearby_interactable != obj:
+		var old_label = nearby_interactable.get_node_or_null("InteractLabel")
+		if old_label:
+			old_label.visible = false
+	nearby_interactable = obj
 
 var equippedItem : String:
 	set(value):
 		equippedItem = value
 		if value in Items.equips:
 			var itemData = Items.equips[value]
-			spawnsProjectile = itemData.get("projectile", "")
-			$AnimationPlayer.speed_scale = itemData.get("fire_rate", 1.0)
-		else:
-			spawnsProjectile = ""
-			$AnimationPlayer.speed_scale = 1.0
+			if "projectile" in itemData:
+				spawnsProjectile = itemData["projectile"]
+			else:
+				spawnsProjectile = ""
 
 #stats
 @export var maxHP := 250.0
@@ -105,46 +112,10 @@ func visibilityFilter(id):
 @rpc("any_peer", "call_local", "reliable")
 func sendMessage(text):
 	if multiplayer.is_server():
-		if str(text).begins_with("/"):
-			_handle_command(str(text))
-			return
 		var messageBoxScene := preload("res://scenes/ui/chat/message_box.tscn")
 		var messageBox := messageBoxScene.instantiate()
 		%PlayerMessages.add_child(messageBox, true)
 		messageBox.text = str(text)
-
-func _handle_command(text: String) -> void:
-	var parts := text.split(" ", false)
-	if parts.is_empty():
-		return
-	match parts[0]:
-		"/give":
-			if parts.size() < 3:
-				_send_server_msg("Usage: /give <player_name> <amount>")
-				return
-			var target_name := parts[1]
-			var amount := parts[2].to_int()
-			_cmd_give(target_name, amount)
-
-func _cmd_give(target_name: String, amount: int) -> void:
-	for pid in Multihelper.spawnedPlayers:
-		if Multihelper.spawnedPlayers[pid]["name"] == target_name:
-			var player_node := get_node_or_null("/root/Game/Level/Main/Players/" + str(pid))
-			if player_node:
-				Multihelper.spawnedPlayers[pid]["score"] += amount
-				var new_score: int = Multihelper.spawnedPlayers[pid]["score"]
-				player_node._sync_score.rpc(new_score)
-				_send_server_msg("Gave %d score to %s (total: %d)" % [amount, target_name, new_score])
-				if new_score >= Victories.WIN_SCORE:
-					Multihelper.trigger_win(pid)
-			return
-	_send_server_msg("Player '%s' not found." % target_name)
-
-func _send_server_msg(msg: String) -> void:
-	var messageBoxScene := preload("res://scenes/ui/chat/message_box.tscn")
-	var messageBox := messageBoxScene.instantiate()
-	%PlayerMessages.add_child(messageBox, true)
-	messageBox.text = "[Server] " + msg
 
 func disconnected(id):
 	if str(id) == name:
@@ -161,12 +132,12 @@ func _process(delta):
 			stamina = min(maxStamina, stamina + STAMINA_REGEN * delta)
 		$PlayerUi.setStaminaBarRatio(stamina / maxStamina)
 		if on_boat and current_boat and is_instance_valid(current_boat):
-			var can_leave := _has_nearby_land(position, 45.0)
+			var can_leave := _has_nearby_land(position, Constants.DISEMBARK_RANGE)
 			current_boat.get_node("InteractLabel").text = "Press E to disembark" if can_leave else "Too far from shore"
 		var mouse_position = get_global_mouse_position()
 		var direction_to_mouse = mouse_position - global_position
 		var angle = direction_to_mouse.angle()
-		var doingAction = Input.is_action_pressed("leftClickAction") and not _is_chat_open()
+		var doingAction = Input.is_action_pressed("leftClickAction")
 		moveProcess(vel, angle, doingAction)
 		var inputData = {
 			"vel": vel,
@@ -227,12 +198,6 @@ func handleAnims(vel, doing_action):
 	else:
 		$AnimationPlayer.stop()
 
-# Returns true while the chat input node is alive, used to suppress movement
-# and item actions so typed characters don't trigger game controls.
-func _is_chat_open() -> bool:
-	return inventory != null and is_instance_valid(inventory) \
-		and inventory.chatinput != null and is_instance_valid(inventory.chatinput)
-
 func _on_next_item():
 	inventory.nextSelection()
 
@@ -244,8 +209,6 @@ func _on_previous_item():
 func _unhandled_input(event):
 	if not is_local:
 		return
-	if _is_chat_open():
-		return
 	if event.is_action_pressed("nextItem"):
 		_on_next_item()
 	elif event.is_action_pressed("previousItem"):
@@ -256,51 +219,36 @@ func _unhandled_input(event):
 		var key = event.physical_keycode
 		if key >= KEY_1 and key <= KEY_9:
 			inventory.setSelection(key - KEY_1)
-		elif key == KEY_Q:
-			_on_drop_item()
 
 func _get_selected_item() -> String:
-	var inv = Inventory.inventories.get(str(name), {})
-	var keys = inv.keys()
-	var slot = inventory.selectedSlot if inventory else 0
+	var inv: Dictionary = Inventory.inventories.get(str(name), {})
+	var keys: Array = inv.keys()
+	var slot: int = inventory.selectedSlot if inventory else 0
 	return keys[slot] if slot < keys.size() else ""
 
 func _on_interact():
 	if on_boat:
-		if _has_nearby_land(position, 45.0):
+		if _has_nearby_land(position, Constants.DISEMBARK_RANGE):
 			_disembark()
-	elif nearby_boat and is_instance_valid(nearby_boat):
-		if _is_water_position(nearby_boat.position):
-			_board(nearby_boat)
-		else:
-			if multiplayer.is_server():
-				nearby_boat.pickup(str(name))
-			else:
-				nearby_boat.pickup.rpc_id(1, str(name))
-			nearby_boat = null
-	elif nearby_door and is_instance_valid(nearby_door):
-		nearby_door.interact(str(multiplayer.get_unique_id()))
-	elif nearby_chest and is_instance_valid(nearby_chest):
-		if nearby_chest.chest_ui_instance and is_instance_valid(nearby_chest.chest_ui_instance):
-			nearby_chest.close_ui()
-		else:
-			nearby_chest.open_ui()
+	elif nearby_interactable and is_instance_valid(nearby_interactable):
+		nearby_interactable.interact(self)
 	else:
 		var selected := _get_selected_item()
 		if selected not in Items.placeables:
 			return
-		const SNAPPED := ["wall", "stone_wall", "door", "stone_door"]
+		if selected == "torch" and _is_water_position(get_global_mouse_position()):
+			return
 		var at := get_global_mouse_position()
-		if selected in SNAPPED:
-			at = (at / WALL_SNAP).round() * WALL_SNAP
-		else:
+		if selected == "boat":
 			at = _clamp_place_range(at, 50.0)
+		elif selected in ["wall", "stone_wall", "door", "stone_door"]:
+			at = (at / WALL_SNAP).round() * WALL_SNAP
 		if multiplayer.is_server():
 			_place_selected(selected, at)
 		else:
 			_place_selected.rpc_id(1, selected, at)
 
-func _board(boat):
+func board(boat):
 	on_boat = true
 	current_boat = boat
 	collision_mask = 0
@@ -316,6 +264,9 @@ func _disembark():
 		position = _find_nearest_land(position)
 		sendPos.rpc(position)
 	current_boat = null
+
+func _get_map():
+	return get_parent().get_parent().get_node_or_null("Map")
 
 func _clamp_place_range(target: Vector2, max_dist: float) -> Vector2:
 	var offset := target - global_position
@@ -376,33 +327,6 @@ func _place_selected(item_id: String, at: Vector2):
 	Inventory.removeItem(str(name), item_id, 1)
 	Items.spawnPlaceableRpc.rpc(item_id, at)
 
-func _on_drop_item() -> void:
-	var inv: Dictionary = Inventory.inventories.get(str(name), {})
-	if inv.is_empty():
-		return
-	var keys := inv.keys()
-	if inventory.selectedSlot >= keys.size():
-		return
-	var item: String = keys[inventory.selectedSlot]
-	if multiplayer.is_server():
-		dropItem(item)
-	else:
-		dropItem.rpc_id(1, item)
-
-@rpc("any_peer", "call_remote", "reliable")
-func dropItem(item: String):
-	if !multiplayer.is_server():
-		return
-	if !Inventory.checkHasItem(str(name), item):
-		return
-	Inventory.removeItem(str(name), item, 1)
-	var pickups := get_node("/root/Game/Level/Main/Pickups")
-	var pickup: Area2D = preload("res://scenes/item/pickup.tscn").instantiate()
-	pickup.itemId = item
-	pickup.position = position
-	pickup.dropper_id = str(name)
-	pickups.call_deferred("add_child", pickup, true)
-
 func punchCheckCollision():
 	var id = multiplayer.get_unique_id()
 	if spawnsProjectile:
@@ -422,51 +346,27 @@ func sendProjectile(towards):
 	Items.spawnProjectile(self, spawnsProjectile, towards, "damageable")
 
 @rpc("authority", "call_local", "reliable")
-func rewardPlayer(by):
+func increaseScore(by):
 	hp += by * 5
 	maxHP += by * 5
 	attackDamage += by
 	speed += by
-	if multiplayer.is_server():
-		var pid := int(str(name))
-		if pid in Multihelper.spawnedPlayers:
-			var new_score: int = mini(Multihelper.spawnedPlayers[pid]["score"] + by, Victories.WIN_SCORE)
-			Multihelper.spawnedPlayers[pid]["score"] = new_score
-			_sync_score.rpc(new_score)
-			if new_score >= Victories.WIN_SCORE:
-				Multihelper.trigger_win(pid)
-
-@rpc("authority", "call_local", "reliable")
-func _sync_score(new_score: int) -> void:
-	var pid := int(str(name))
-	if pid in Multihelper.spawnedPlayers:
-		Multihelper.spawnedPlayers[pid]["score"] = new_score
+	Multihelper.spawnedPlayers[int(str(name))]["score"] += by
 	Multihelper.player_score_updated.emit()
 
 func objectDestroyed():
-	rewardPlayer.rpc(Constants.OBJECT_SCORE_GAIN)
+	increaseScore.rpc(Constants.OBJECT_SCORE_GAIN)
 
 func mobKilled():
-	rewardPlayer.rpc(Constants.MOB_SCORE_GAIN)
+	increaseScore.rpc(Constants.MOB_SCORE_GAIN)
 
 func enemyPlayerKilled():
-	rewardPlayer.rpc(Constants.PK_SCORE_GAIN)
+	increaseScore.rpc(Constants.PK_SCORE_GAIN)
 
 func getDamage(causer, amount, _type):
 	hp -= amount
 	if (hp - amount) <= 0 and causer.is_in_group("player"):
 		causer.player_killed.emit()
-
-# Restores full HP on all peers and teleports to a random walkable tile.
-# Called by the server at the start of each new round.
-@rpc("authority", "call_local", "reliable")
-func respawn() -> void:
-	hp = maxHP
-	if multiplayer.is_server():
-		var spawn_pos: Vector2 = Multihelper.map.tile_map.map_to_local(
-			Multihelper.map.walkable_tiles.pick_random()
-		)
-		sendPos.rpc(spawn_pos)
 
 func die():
 	if !multiplayer.is_server():
@@ -488,7 +388,7 @@ func dropInventory():
 
 @rpc("any_peer", "call_local", "reliable")
 func tryEquipItem(id):
-	if name in Inventory.inventories and id in Inventory.inventories[name]:
+	if id in Inventory.inventories[name].keys():
 		equipItem.rpc(id)
 
 @rpc("any_peer", "call_local", "reliable")
