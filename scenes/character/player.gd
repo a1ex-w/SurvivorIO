@@ -80,6 +80,16 @@ func _ready():
 		inventory.player = self
 		$Camera2D.enabled = true
 	Multihelper.player_disconnected.connect(disconnected)
+	call_deferred("_init_crown")
+
+func _init_crown() -> void:
+	var pid := int(str(name))
+	if pid in Multihelper.spawnedPlayers:
+		$PlayerUi.setCrownWins(Multihelper.spawnedPlayers[pid].get("wins", 0))
+
+# Forwards the updated win count to the player's UI crown label.
+func update_crown(win_count: int) -> void:
+	$PlayerUi.setCrownWins(win_count)
 
 func visibilityFilter(id):
 	if id == int(str(name)):
@@ -89,10 +99,46 @@ func visibilityFilter(id):
 @rpc("any_peer", "call_local", "reliable")
 func sendMessage(text):
 	if multiplayer.is_server():
+		if str(text).begins_with("/"):
+			_handle_command(str(text))
+			return
 		var messageBoxScene := preload("res://scenes/ui/chat/message_box.tscn")
 		var messageBox := messageBoxScene.instantiate()
 		%PlayerMessages.add_child(messageBox, true)
 		messageBox.text = str(text)
+
+func _handle_command(text: String) -> void:
+	var parts := text.split(" ", false)
+	if parts.is_empty():
+		return
+	match parts[0]:
+		"/give":
+			if parts.size() < 3:
+				_send_server_msg("Usage: /give <player_name> <amount>")
+				return
+			var target_name := parts[1]
+			var amount := parts[2].to_int()
+			_cmd_give(target_name, amount)
+
+func _cmd_give(target_name: String, amount: int) -> void:
+	for pid in Multihelper.spawnedPlayers:
+		if Multihelper.spawnedPlayers[pid]["name"] == target_name:
+			var player_node := get_node_or_null("/root/Game/Level/Main/Players/" + str(pid))
+			if player_node:
+				Multihelper.spawnedPlayers[pid]["score"] += amount
+				var new_score: int = Multihelper.spawnedPlayers[pid]["score"]
+				player_node._sync_score.rpc(new_score)
+				_send_server_msg("Gave %d score to %s (total: %d)" % [amount, target_name, new_score])
+				if new_score >= Victories.WIN_SCORE:
+					Multihelper.trigger_win(pid)
+			return
+	_send_server_msg("Player '%s' not found." % target_name)
+
+func _send_server_msg(msg: String) -> void:
+	var messageBoxScene := preload("res://scenes/ui/chat/message_box.tscn")
+	var messageBox := messageBoxScene.instantiate()
+	%PlayerMessages.add_child(messageBox, true)
+	messageBox.text = "[Server] " + msg
 
 func disconnected(id):
 	if str(id) == name:
@@ -100,8 +146,8 @@ func disconnected(id):
 	
 func _process(delta):
 	if str(multiplayer.get_unique_id()) == name:
-		var is_sprinting = Input.is_key_pressed(KEY_SHIFT) and stamina > 0 and not on_boat
-		var vel = Input.get_vector("walkLeft", "walkRight", "walkUp", "walkDown") * speed
+		var is_sprinting = Input.is_key_pressed(KEY_SHIFT) and stamina > 0 and not on_boat and not _is_chat_open()
+		var vel = Vector2.ZERO if _is_chat_open() else Input.get_vector("walkLeft", "walkRight", "walkUp", "walkDown") * speed
 		if is_sprinting and vel != Vector2.ZERO:
 			vel *= SPRINT_MULT
 			stamina = max(0.0, stamina - STAMINA_DRAIN * delta)
@@ -114,7 +160,7 @@ func _process(delta):
 		var mouse_position = get_global_mouse_position()
 		var direction_to_mouse = mouse_position - global_position
 		var angle = direction_to_mouse.angle()
-		var doingAction = Input.is_action_pressed("leftClickAction")
+		var doingAction = Input.is_action_pressed("leftClickAction") and not _is_chat_open()
 		moveProcess(vel, angle, doingAction)
 		var inputData = {
 			"vel": vel,
@@ -175,6 +221,12 @@ func handleAnims(vel, doing_action):
 	else:
 		$AnimationPlayer.stop()
 
+# Returns true while the chat input node is alive, used to suppress movement
+# and item actions so typed characters don't trigger game controls.
+func _is_chat_open() -> bool:
+	return inventory != null and is_instance_valid(inventory) \
+		and inventory.chatinput != null and is_instance_valid(inventory.chatinput)
+
 func _on_next_item():
 	inventory.nextSelection()
 
@@ -185,6 +237,8 @@ func _on_previous_item():
 # Handle input events
 func _unhandled_input(event):
 	if name != str(multiplayer.get_unique_id()):
+		return
+	if _is_chat_open():
 		return
 	if event.is_action_pressed("nextItem"):
 		_on_next_item()
@@ -363,29 +417,51 @@ func sendProjectile(towards):
 	Items.spawnProjectile(self, spawnsProjectile, towards, "damageable")
 
 @rpc("authority", "call_local", "reliable")
-func increaseScore(by):
+func rewardPlayer(by):
 	hp += by * 5
 	maxHP += by * 5
 	attackDamage += by
 	speed += by
+	if multiplayer.is_server():
+		var pid := int(str(name))
+		if pid in Multihelper.spawnedPlayers:
+			var new_score: int = mini(Multihelper.spawnedPlayers[pid]["score"] + by, Victories.WIN_SCORE)
+			Multihelper.spawnedPlayers[pid]["score"] = new_score
+			_sync_score.rpc(new_score)
+			if new_score >= Victories.WIN_SCORE:
+				Multihelper.trigger_win(pid)
+
+@rpc("authority", "call_local", "reliable")
+func _sync_score(new_score: int) -> void:
 	var pid := int(str(name))
 	if pid in Multihelper.spawnedPlayers:
-		Multihelper.spawnedPlayers[pid]["score"] += by
+		Multihelper.spawnedPlayers[pid]["score"] = new_score
 	Multihelper.player_score_updated.emit()
 
 func objectDestroyed():
-	increaseScore.rpc(Constants.OBJECT_SCORE_GAIN)
+	rewardPlayer.rpc(Constants.OBJECT_SCORE_GAIN)
 
 func mobKilled():
-	increaseScore.rpc(Constants.MOB_SCORE_GAIN)
+	rewardPlayer.rpc(Constants.MOB_SCORE_GAIN)
 
 func enemyPlayerKilled():
-	increaseScore.rpc(Constants.PK_SCORE_GAIN)
+	rewardPlayer.rpc(Constants.PK_SCORE_GAIN)
 
 func getDamage(causer, amount, _type):
 	hp -= amount
 	if (hp - amount) <= 0 and causer.is_in_group("player"):
 		causer.player_killed.emit()
+
+# Restores full HP on all peers and teleports to a random walkable tile.
+# Called by the server at the start of each new round.
+@rpc("authority", "call_local", "reliable")
+func respawn() -> void:
+	hp = maxHP
+	if multiplayer.is_server():
+		var spawn_pos: Vector2 = Multihelper.map.tile_map.map_to_local(
+			Multihelper.map.walkable_tiles.pick_random()
+		)
+		sendPos.rpc(spawn_pos)
 
 func die():
 	if !multiplayer.is_server():

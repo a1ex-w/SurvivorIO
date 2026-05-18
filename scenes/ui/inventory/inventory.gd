@@ -16,23 +16,26 @@ func _ready():
 func _unhandled_input(event):
 	if not event is InputEventKey:
 		return
+	if is_instance_valid(chatinput):
+		# Chat open — only handle send and close
+		if event.is_action_pressed("chat"):
+			if chatinput.text:
+				player.sendMessage.rpc_id(1, chatinput.text)
+			chatinput.queue_free()
+		elif event.is_action_pressed("esc"):
+			chatinput.queue_free()
+		return
+	# Chat closed — handle normal keys
 	if event.is_action_pressed("craftMenu"):
 		_on_craft_button_pressed()
-	if event.is_action_pressed("esc"):
-		if is_instance_valid(chatinput):
-			chatinput.queue_free()
 	if event.is_action_pressed("chat"):
-		if is_instance_valid(chatinput):
-			if chatinput.text:
-				player.sendMessage.rpc_id(1,chatinput.text)
-			chatinput.queue_free()
-		else:
-			var chatInputSc := preload("res://scenes/ui/chat/chat_input.tscn")
-			var chatInput := chatInputSc.instantiate()
-			%ChatInputLocation.add_child(chatInput)
-			chatinput = chatInput
-			chatinput.gui_input.connect(_unhandled_input)
-			chatinput.grab_focus()
+		var chatInputSc := preload("res://scenes/ui/chat/chat_input.tscn")
+		var chatInput := chatInputSc.instantiate()
+		%ChatInputLocation.add_child(chatInput)
+		chatinput = chatInput
+		chatinput.add_to_group("chat_open")
+		chatinput.gui_input.connect(_unhandled_input)
+		chatinput.grab_focus()
 
 func inventoryUpdated(_id):
 	populateItems()

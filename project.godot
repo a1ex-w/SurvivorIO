@@ -22,20 +22,17 @@ config/icon="res://icon.svg"
 [autoload]
 
 Constants="*res://scenes/autoloads/Constants.gd"
+Victories="*res://scenes/autoloads/Victories.gd"
 Multihelper="*res://scenes/autoloads/Multihelper.gd"
 Inventory="*res://scenes/autoloads/Inventory.gd"
 Items="*res://scenes/autoloads/Items.gd"
-MCPGameBridge="res://addons/godot_mcp/game_bridge/mcp_game_bridge.gd"
+MCPGameBridge="res://scenes/autoloads/MCPBridge.gd"
 
 [display]
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
 window/stretch/mode="viewport"
-
-[editor_plugins]
-
-enabled=PackedStringArray("res://addons/godot-neovim/plugin.cfg", "res://addons/godot_mcp/plugin.cfg")
 
 [filesystem]
 

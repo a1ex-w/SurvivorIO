@@ -21,6 +21,7 @@ func generateMap():
 	generate_terrain()
 
 func generate_terrain():
+	walkable_tiles.clear()
 	for y in range(map_height):
 		for x in range(map_width):
 			var noise_value = noise.get_noise_2d(x, y)
