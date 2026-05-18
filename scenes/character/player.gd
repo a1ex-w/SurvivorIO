@@ -19,6 +19,16 @@ const WALL_SNAP := 64.0
 var inventory : Control
 var nearby_interactable = null
 var on_boat := false
+
+# Called by interactables on body_entered. Hides the previous interactable's
+# label so only one prompt is ever visible at a time.
+func set_nearby_interactable(obj) -> void:
+	if nearby_interactable and is_instance_valid(nearby_interactable) \
+			and nearby_interactable != obj:
+		var old_label = nearby_interactable.get_node_or_null("InteractLabel")
+		if old_label:
+			old_label.visible = false
+	nearby_interactable = obj
 var current_boat = null
 
 var equippedItem : String:

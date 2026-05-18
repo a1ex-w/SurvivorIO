@@ -31,7 +31,7 @@ func interact(_player) -> void:
 
 func _on_interact_area_body_entered(body):
 	if body.is_in_group("player") and body.name == str(multiplayer.get_unique_id()):
-		body.nearby_interactable = self
+		body.set_nearby_interactable(self)
 		$InteractLabel.visible = true
 
 func _on_interact_area_body_exited(body):

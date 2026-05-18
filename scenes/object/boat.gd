@@ -75,7 +75,7 @@ func interact(player: Node) -> void:
 
 func _on_area_entered(body):
 	if body.is_in_group("player") and body.name == str(multiplayer.get_unique_id()):
-		body.nearby_interactable = self
+		body.set_nearby_interactable(self)
 		$InteractLabel.text = "Press E to board" if _is_on_water() else "Press E to pick up"
 		$InteractLabel.visible = true
 

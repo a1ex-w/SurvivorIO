@@ -33,7 +33,7 @@ func request_toggle(_player_id: String):
 
 func _on_body_entered(body):
 	if body.is_in_group("player") and body.name == str(multiplayer.get_unique_id()):
-		body.nearby_interactable = self
+		body.set_nearby_interactable(self)
 		$InteractLabel.visible = true
 
 func _on_body_exited(body):
