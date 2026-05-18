@@ -87,7 +87,6 @@ func _deregister_character(id):
 func _on_player_disconnected(id):
 	connectedPlayers.erase(id)
 	spawnedPlayers.erase(id)
-	syncedPlayers.erase(id)
 	player_disconnected.emit(id)
 
 func _on_connected_ok():
