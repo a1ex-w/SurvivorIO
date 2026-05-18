@@ -198,6 +198,12 @@ func handleAnims(vel, doing_action):
 	else:
 		$AnimationPlayer.stop()
 
+# Returns true while the chat input node is alive, used to suppress movement
+# and item actions so typed characters don't trigger game controls.
+func _is_chat_open() -> bool:
+	return inventory != null and is_instance_valid(inventory) \
+		and inventory.chatinput != null and is_instance_valid(inventory.chatinput)
+
 func _on_next_item():
 	inventory.nextSelection()
 
