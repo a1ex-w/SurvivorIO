@@ -274,9 +274,6 @@ func _clamp_place_range(target: Vector2, max_dist: float) -> Vector2:
 		offset = offset.normalized() * max_dist
 	return global_position + offset
 
-func _get_map():
-	return get_parent().get_parent().get_node_or_null("Map")
-
 func _has_nearby_land(world_pos: Vector2, max_px: float) -> bool:
 	var map = _get_map()
 	if !map:
