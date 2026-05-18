@@ -391,6 +391,13 @@ func increaseScore(by):
 	Multihelper.spawnedPlayers[int(str(name))]["score"] += by
 	Multihelper.player_score_updated.emit()
 
+@rpc("authority", "call_local", "reliable")
+func _sync_score(new_score: int) -> void:
+	var pid := int(str(name))
+	if pid in Multihelper.spawnedPlayers:
+		Multihelper.spawnedPlayers[pid]["score"] = new_score
+	Multihelper.player_score_updated.emit()
+
 func objectDestroyed():
 	increaseScore.rpc(Constants.OBJECT_SCORE_GAIN)
 
