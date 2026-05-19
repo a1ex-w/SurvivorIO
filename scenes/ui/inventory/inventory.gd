@@ -26,6 +26,8 @@ func _unhandled_input(event):
 			chatinput.queue_free()
 		return
 	# Chat closed — handle normal keys
+	if not get_tree().get_nodes_in_group("settings_open").is_empty():
+		return
 	if event.is_action_pressed("craftMenu"):
 		_on_craft_button_pressed()
 	if event.is_action_pressed("chat"):
