@@ -4,6 +4,9 @@ extends Node2D
 # whenever an object is destroyed. _top_up_objects() fills to cap on player join/leave.
 # The ObjectSpawnTimer (60s) is a slow integrity check only; it is not the primary driver.
 var spawnedObjects := 0
+# Tracks how many of each object type are currently on the map.
+# Used to enforce min_count guarantees from Items.objects.
+var spawnedByType: Dictionary = {}
 
 #enemies
 const enemyWaveCount := 1
@@ -29,25 +32,38 @@ func createHUD():
 
 #object spawn
 
-func spawnObjects(amount):
+func spawnObjects(amount: int) -> int:
 	var breakableScene := preload("res://scenes/object/breakable.tscn")
-	var spawnedThisWave := 0
 	for i in range(amount):
-		var spawnPos = $Map.tile_map.map_to_local($Map.walkable_tiles.pick_random())
+		var spawnPos := $Map.tile_map.map_to_local($Map.walkable_tiles.pick_random())
 		var breakable := breakableScene.instantiate()
-		var objectId = _pick_weighted_object()
-		$Objects.add_child(breakable,true)
+		var objectId := _pick_next_object_type()
+		$Objects.add_child(breakable, true)
 		breakable.objectId = objectId
 		breakable.position = spawnPos
 		breakable.spawner = self
 		spawnedObjects += 1
-		spawnedThisWave += 1
-	return spawnedThisWave
+		spawnedByType[objectId] = spawnedByType.get(objectId, 0) + 1
+	return amount
+
+# Selects the next object type to spawn, enforcing min_count guarantees first.
+# If any type is below its min_count, picks randomly from those deficient types.
+# Otherwise falls through to weighted random selection.
+# To set a minimum for a type: add "min_count": N to its entry in Items.objects.
+func _pick_next_object_type() -> String:
+	var deficient: Array = []
+	for key in Items.objects:
+		var min_c: int = Items.objects[key].get("min_count", 0)
+		if min_c > 0 and spawnedByType.get(key, 0) < min_c:
+			deficient.append(key)
+	if not deficient.is_empty():
+		return deficient.pick_random()
+	return _pick_weighted_object()
 
 # Selects a random object type using weighted probability from Items.objects.
 # Higher weight = more frequent spawn. Objects without a weight field default to 1.
 # To adjust rarity: change the weight value in Items.objects — no code changes needed.
-# Gotcha: returns "" if Items.objects is empty (shouldn't happen in practice).
+# Gotcha: returns the last key as fallback if rng overshoots (shouldn't happen).
 func _pick_weighted_object() -> String:
 	var total_weight := 0
 	for key in Items.objects:
@@ -71,8 +87,9 @@ func _max_objects() -> int:
 # Immediately spawns one replacement at least OBJECT_RESPAWN_MIN_DIST away from
 # the broken object's position so the player doesn't see it appear beside them.
 # Falls back to unrestricted spawn if no distant tiles are available.
-func on_object_broken(broken_pos: Vector2) -> void:
+func on_object_broken(broken_pos: Vector2, object_id: String) -> void:
 	spawnedObjects -= 1
+	spawnedByType[object_id] = max(0, spawnedByType.get(object_id, 0) - 1)
 	if Multihelper.map and not Multihelper.map.walkable_tiles.is_empty():
 		_spawn_away_from(broken_pos)
 
@@ -90,11 +107,13 @@ func _spawn_away_from(excluded_pos: Vector2) -> void:
 		spawn_pos = tile_map.map_to_local(candidates.pick_random())
 	var breakableScene := preload("res://scenes/object/breakable.tscn")
 	var breakable := breakableScene.instantiate()
+	var objectId := _pick_next_object_type()
 	$Objects.add_child(breakable, true)
-	breakable.objectId = _pick_weighted_object()
+	breakable.objectId = objectId
 	breakable.position = spawn_pos
 	breakable.spawner = self
 	spawnedObjects += 1
+	spawnedByType[objectId] = spawnedByType.get(objectId, 0) + 1
 
 # Fills the map up to the current player-scaled cap.
 # Called when players join or leave so the resource pool adjusts immediately.
@@ -205,6 +224,7 @@ func clear_world() -> void:
 	for c in $Pickups.get_children(): c.queue_free()
 	spawnedEnemies.clear()
 	spawnedObjects = 0
+	spawnedByType.clear()
 
 # Seeds the world after a round reset. Spawns to the full player-scaled cap.
 func spawn_initial_objects() -> void:
