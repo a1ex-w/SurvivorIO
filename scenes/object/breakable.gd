@@ -35,7 +35,7 @@ func breakObject():
 	if !multiplayer.is_server():
 		return
 	queue_free()
-	spawner.spawnedObjects -= 1
+	spawner.on_object_broken()
 	spawnDrops()
 
 func spawnDrops():

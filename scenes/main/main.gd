@@ -1,8 +1,8 @@
 extends Node2D
 
-#objects
-const initialSpawnObjects := 20   # generous opening spread; scales further on first refill
-const objectWaveCount := 15        # objects added per refill tick until cap is reached
+# Resource count is maintained continuously — one replacement spawns immediately
+# whenever an object is destroyed. _top_up_objects() fills to cap on player join/leave.
+# The ObjectSpawnTimer (60s) is a slow integrity check only; it is not the primary driver.
 var spawnedObjects := 0
 
 #enemies
@@ -15,7 +15,9 @@ var spawnedEnemies := {}
 func _ready():
 	if multiplayer.is_server():
 		Multihelper.loadMap()
-		spawnObjects(initialSpawnObjects)
+		spawnObjects(_max_objects())
+		Multihelper.player_registered.connect(_top_up_objects)
+		Multihelper.player_despawned.connect(_top_up_objects)
 		$HUD.queue_free()
 	$dayNight.time_tick.connect(%DayNightCycleUI.set_daytime)
 	createHUD()
@@ -58,21 +60,33 @@ func _pick_weighted_object() -> String:
 			return key
 	return Items.objects.keys().back()
 
-# Computes the current object cap based on connected player count.
-# Scales up with more players so resources stay plentiful in larger sessions.
+# Returns the target object count based on current player count.
+# Ensures the map is always resource-rich enough for all connected players.
+# Gotcha: spawnedPlayers may be empty at startup — MAX_OBJECTS_BASE is the floor.
 func _max_objects() -> int:
 	return max(Constants.MAX_OBJECTS_BASE,
 		Multihelper.spawnedPlayers.size() * Constants.OBJECTS_PER_PLAYER)
 
-func trySpawnObjectWave():
-	var cap := _max_objects()
-	if spawnedObjects < cap:
-		var toMax := cap - spawnedObjects
-		spawnObjects(min(objectWaveCount, toMax))
+# Called by breakable.gd when an object is destroyed.
+# Immediately spawns one replacement so the map count stays constant.
+# Gotcha: guards against spawning before the map has walkable tiles loaded.
+func on_object_broken() -> void:
+	spawnedObjects -= 1
+	if Multihelper.map and not Multihelper.map.walkable_tiles.is_empty():
+		spawnObjects(1)
 
+# Fills the map up to the current player-scaled cap.
+# Called when players join or leave so the resource pool adjusts immediately.
+func _top_up_objects() -> void:
+	var shortage := _max_objects() - spawnedObjects
+	if shortage > 0:
+		spawnObjects(shortage)
+
+# Slow integrity check — tops up any discrepancy not caught by event-driven spawning.
+# Not the primary spawn driver; ObjectSpawnTimer should be set to 60s.
 func _on_object_spawn_timer_timeout():
 	if multiplayer.is_server():
-		trySpawnObjectWave()
+		_top_up_objects()
 
 #enemy spawn
 
@@ -171,6 +185,6 @@ func clear_world() -> void:
 	spawnedEnemies.clear()
 	spawnedObjects = 0
 
-# Seeds the world with the initial object wave after a round reset.
+# Seeds the world after a round reset. Spawns to the full player-scaled cap.
 func spawn_initial_objects() -> void:
-	spawnObjects(initialSpawnObjects)
+	spawnObjects(_max_objects())
