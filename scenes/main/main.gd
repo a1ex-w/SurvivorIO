@@ -32,6 +32,11 @@ func createHUD():
 
 #object spawn
 
+# Spawns the given number of breakable objects at random walkable positions.
+# Uses _pick_next_object_type() which enforces min_count guarantees before
+# falling back to weighted random — no manual type selection needed.
+# Updates both spawnedObjects and spawnedByType for accurate count tracking.
+# Gotcha: does not check the cap — callers are responsible for staying within _max_objects().
 func spawnObjects(amount: int) -> int:
 	var breakableScene := preload("res://scenes/object/breakable.tscn")
 	for i in range(amount):
