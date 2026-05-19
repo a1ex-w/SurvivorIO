@@ -8,3 +8,9 @@ func _ready() -> void:
 	super._ready()
 	$Sprite2D.texture = load("res://assets/objects/windmill_world.png")
 	$Sprite2D.scale = SCALE
+
+func _do_break() -> void:
+	if multiplayer.is_server():
+		Items.spawnPickups("wood", position, 3)
+		Items.spawnPickups("stone", position, 1)
+	queue_free()
