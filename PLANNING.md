@@ -146,6 +146,43 @@ New content should work with existing systems for free. A new placeable that ext
 
 ---
 
+## Code Quality Standards
+
+> These standards apply to every line of code written for this project — by humans and AI agents alike. They are enforced in `CLAUDE.md` and should be internalised by all contributors.
+
+### 1. Check existing systems first
+Before writing new code, search the codebase for systems that already solve or partially solve the problem. Extend or reuse before creating something new. The data-driven systems in `Items.gd`, `PlaceableObject`, and the damage/damageable group contracts are all designed to be extended — use them.
+
+### 2. Evergreen
+Code should be reusable by future developers and AI agents without rewriting it. Prefer general systems over one-off solutions. Ask: "if someone adds a new item/mob/structure tomorrow, does my code handle it for free?"
+
+### 3. Documented
+Every system, class, and non-trivial function must have a comment answering three things:
+- **What it is** — one sentence on the purpose
+- **How to use it** — a concrete usage example or extension pattern
+- **What to watch out for** — constraints, authority boundaries, timing requirements, or gotchas
+
+A future developer or AI agent reading the code cold should immediately understand its purpose and usage without asking.
+
+### 4. Automatic
+Systems should require as little manual wiring as possible. New items, scenes, or features should work with existing systems for free — not require the developer to remember extra registration steps. If adding content requires touching more than one or two files, reconsider the design.
+
+### 5. Safe
+Before finalising any code, check for:
+- Null access and missing dictionary keys
+- Node-ready timing issues (properties set before node enters tree)
+- Server/client authority boundaries (never trust the client for game logic)
+- RPC targets (guard against sending to disconnected peers)
+- Edge cases at 0 players, empty arrays, or mid-round resets
+
+### 6. Comments and commits
+Commit messages must describe **what the system does and why it exists**, not just what files changed. Another developer reading the git log should be able to reconstruct the intent without reading the diff.
+
+### 7. Pull requests
+Every PR must include a test plan checklist covering every new feature, system, or fix. Each item must be specific enough that a tester knows exactly what to do and what outcome to expect.
+
+---
+
 ## Technical Notes for New Contributors
 
 ### Adding a new mob
