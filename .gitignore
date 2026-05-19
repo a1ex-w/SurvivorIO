@@ -22,3 +22,4 @@ CLAUDE.md
 
 # IDK what this is but we should probably ignore it...
 .DS_Store
+.mcp.json
