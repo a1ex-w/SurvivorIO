@@ -1,9 +1,8 @@
 extends Node2D
 
 #objects
-const initialSpawnObjects := 10
-const maxObjects := Constants.MAX_OBJECTS
-const objectWaveCount := 10
+const initialSpawnObjects := 20   # generous opening spread; scales further on first refill
+const objectWaveCount := 15        # objects added per refill tick until cap is reached
 var spawnedObjects := 0
 
 #enemies
@@ -59,9 +58,16 @@ func _pick_weighted_object() -> String:
 			return key
 	return Items.objects.keys().back()
 
+# Computes the current object cap based on connected player count.
+# Scales up with more players so resources stay plentiful in larger sessions.
+func _max_objects() -> int:
+	return max(Constants.MAX_OBJECTS_BASE,
+		Multihelper.spawnedPlayers.size() * Constants.OBJECTS_PER_PLAYER)
+
 func trySpawnObjectWave():
-	if spawnedObjects < maxObjects:
-		var toMax := maxObjects - spawnedObjects
+	var cap := _max_objects()
+	if spawnedObjects < cap:
+		var toMax := cap - spawnedObjects
 		spawnObjects(min(objectWaveCount, toMax))
 
 func _on_object_spawn_timer_timeout():
