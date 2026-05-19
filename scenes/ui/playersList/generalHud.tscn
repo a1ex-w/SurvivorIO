@@ -87,4 +87,5 @@ Enter — Chat
 ESC — Settings
 
 [Server commands]
-/give <name> <amount> — Grant score"
+/give points <name> <amount> — Grant score
+/give item <name> <item_id> <amount> — Give item"
