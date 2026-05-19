@@ -20,6 +20,7 @@ func _ready():
 func _on_map_ready():
 	tilemap = Multihelper.map.tile_map
 	drawn = false
+	queue_redraw()
 
 func _draw():
 	if tilemap == null:

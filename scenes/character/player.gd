@@ -450,7 +450,7 @@ func enemyPlayerKilled():
 
 func getDamage(causer, amount, _type):
 	hp -= amount
-	if (hp - amount) <= 0 and causer.is_in_group("player"):
+	if hp <= 0 and causer.is_in_group("player"):
 		causer.player_killed.emit()
 
 # Restores full HP on all peers and teleports to a random walkable tile.
@@ -458,7 +458,8 @@ func getDamage(causer, amount, _type):
 @rpc("authority", "call_local", "reliable")
 func respawn() -> void:
 	hp = maxHP
-	if multiplayer.is_server():
+	if multiplayer.is_server() and Multihelper.map \
+			and not Multihelper.map.walkable_tiles.is_empty():
 		var spawn_pos: Vector2 = Multihelper.map.tile_map.map_to_local(
 			Multihelper.map.walkable_tiles.pick_random()
 		)

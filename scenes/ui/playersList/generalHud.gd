@@ -11,9 +11,12 @@ func _ready():
 	Multihelper.win_announced.connect(_on_win_announced)
 
 func _exit_tree():
-	Multihelper.player_registered.disconnect(makePlayerList)
-	Multihelper.player_despawned.disconnect(makePlayerList)
-	Multihelper.player_score_updated.disconnect(refreshPlayerList)
+	if Multihelper.player_registered.is_connected(makePlayerList):
+		Multihelper.player_registered.disconnect(makePlayerList)
+	if Multihelper.player_despawned.is_connected(makePlayerList):
+		Multihelper.player_despawned.disconnect(makePlayerList)
+	if Multihelper.player_score_updated.is_connected(refreshPlayerList):
+		Multihelper.player_score_updated.disconnect(refreshPlayerList)
 	if Multihelper.win_announced.is_connected(_on_win_announced):
 		Multihelper.win_announced.disconnect(_on_win_announced)
 
@@ -41,6 +44,9 @@ func refreshPlayerList():
 func _on_win_announced(winner_name: String, win_count: int) -> void:
 	%WinBanner.visible = true
 	for i in range(5, 0, -1):
+		if not is_inside_tree():
+			return
 		%WinBanner.text = "♛ %s wins! (%d total) — New round in %ds..." % [winner_name, win_count, i]
 		await get_tree().create_timer(1.0).timeout
-	%WinBanner.visible = false
+	if is_inside_tree():
+		%WinBanner.visible = false
