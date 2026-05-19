@@ -20,11 +20,12 @@ func _process(_delta):
 	queue_redraw()
 
 func _draw():
-	if is_instance_valid(player):
-		var player_pos = player.global_position / Vector2(tilemap.tile_set.tile_size) * tile_size
-		var player_rect = Rect2(player_pos, tile_size*4)
+	if is_instance_valid(player) and tilemap != null:
+		var tile_coords := tilemap.local_to_map(player.global_position)
+		var player_pos := Vector2(tile_coords) * tile_size
+		var player_rect := Rect2(player_pos, tile_size * 2)
 		draw_rect(player_rect, PLAYER_COLOR)
-		coordsLabel.text = str(Vector2i(player_pos))
+		coordsLabel.text = str(tile_coords)
 	else:
 		var pid := str(multiplayer.get_unique_id())
 		player = Multihelper.main.get_node_or_null("Players/" + pid) if Multihelper.main else null
