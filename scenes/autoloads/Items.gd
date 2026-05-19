@@ -24,18 +24,21 @@ var mobs := {
 }
 
 var objects := {
-	"tree1": {"id": "tree1", "hp": 40, "tool": "axe", "drops": {"wood": {"min": 1, "max": 2}}},
-	"rock1": {"id": "rock1", "hp": 70, "tool": "pickaxe", "drops": {"stone": {"min": 1, "max": 3}}},
-	"tree2": {"id": "tree2", "hp": 50, "tool": "axe", "drops": {"wood": {"min": 2, "max": 4}}},
-	"rock2": {"id": "rock2", "hp": 100, "tool": "pickaxe", "drops": {"stone": {"min": 2, "max": 5}}},
-	"bush1": {"id": "bush1", "hp": 20, "tool": "sword", "drops": {"berries": {"min": 1, "max": 3}}},
-	"ore1": {"id": "ore1", "hp": 120, "tool": "pickaxe", "drops": {"iron": {"min": 1, "max": 3}}},
-	"tree3": {"id": "tree3", "hp": 60, "tool": "axe", "drops": {"wood": {"min": 3, "max": 5}, "sap": {"min": 1, "max": 1}}},
-	"rock3": {"id": "rock3", "hp": 90, "tool": "pickaxe", "drops": {"stone": {"min": 2, "max": 4}, "coal": {"min": 1, "max": 2}}},
-	"magicPlant1": {"id": "magicPlant1", "hp": 30, "tool": "sword", "drops": {"magicHerb": {"min": 1, "max": 2}}},
-	"crystal1": {"id": "crystal1", "hp": 150, "tool": "pickaxe", "drops": {"crystalShard": {"min": 1, "max": 2}}},
-	"magicTree1": {"id": "magicTree1", "hp": 70, "tool": "axe", "drops": {"magicWood": {"min": 1, "max": 3}}},
-	"magicRock1": {"id": "magicRock1", "hp": 110, "tool": "pickaxe", "drops": {"magicStone": {"min": 1, "max": 2}}},
+	# weight controls spawn frequency relative to other objects.
+	# Higher = more common. Omitting weight defaults to 1 (treated as rare).
+	# New object types only need a weight field — no code changes required.
+	"tree1":      {"id": "tree1",      "hp": 40,  "tool": "axe",      "weight": 12, "drops": {"wood":        {"min": 1, "max": 2}}},
+	"rock1":      {"id": "rock1",      "hp": 70,  "tool": "pickaxe",  "weight": 12, "drops": {"stone":       {"min": 1, "max": 3}}},
+	"tree2":      {"id": "tree2",      "hp": 50,  "tool": "axe",      "weight": 10, "drops": {"wood":        {"min": 2, "max": 4}}},
+	"rock2":      {"id": "rock2",      "hp": 100, "tool": "pickaxe",  "weight": 10, "drops": {"stone":       {"min": 2, "max": 5}}},
+	"bush1":      {"id": "bush1",      "hp": 20,  "tool": "sword",    "weight": 8,  "drops": {"berries":     {"min": 1, "max": 3}}},
+	"tree3":      {"id": "tree3",      "hp": 60,  "tool": "axe",      "weight": 8,  "drops": {"wood":        {"min": 3, "max": 5}, "sap": {"min": 1, "max": 1}}},
+	"rock3":      {"id": "rock3",      "hp": 90,  "tool": "pickaxe",  "weight": 8,  "drops": {"stone":       {"min": 2, "max": 4}, "coal": {"min": 1, "max": 2}}},
+	"ore1":       {"id": "ore1",       "hp": 120, "tool": "pickaxe",  "weight": 4,  "drops": {"iron":        {"min": 1, "max": 3}}},
+	"magicPlant1":{"id": "magicPlant1","hp": 30,  "tool": "sword",    "weight": 3,  "drops": {"magicHerb":   {"min": 1, "max": 2}}},
+	"magicTree1": {"id": "magicTree1", "hp": 70,  "tool": "axe",      "weight": 2,  "drops": {"magicWood":   {"min": 1, "max": 3}}},
+	"magicRock1": {"id": "magicRock1", "hp": 110, "tool": "pickaxe",  "weight": 2,  "drops": {"magicStone":  {"min": 1, "max": 2}}},
+	"crystal1":   {"id": "crystal1",   "hp": 150, "tool": "pickaxe",  "weight": 1,  "drops": {"crystalShard":{"min": 1, "max": 2}}},
 }
 
 var equips := {

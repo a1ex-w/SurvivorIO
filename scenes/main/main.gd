@@ -34,7 +34,7 @@ func spawnObjects(amount):
 	for i in range(amount):
 		var spawnPos = $Map.tile_map.map_to_local($Map.walkable_tiles.pick_random())
 		var breakable := breakableScene.instantiate()
-		var objectId = Items.objects.keys().pick_random()
+		var objectId = _pick_weighted_object()
 		$Objects.add_child(breakable,true)
 		breakable.objectId = objectId
 		breakable.position = spawnPos
@@ -42,6 +42,22 @@ func spawnObjects(amount):
 		spawnedObjects += 1
 		spawnedThisWave += 1
 	return spawnedThisWave
+
+# Selects a random object type using weighted probability from Items.objects.
+# Higher weight = more frequent spawn. Objects without a weight field default to 1.
+# To adjust rarity: change the weight value in Items.objects — no code changes needed.
+# Gotcha: returns "" if Items.objects is empty (shouldn't happen in practice).
+func _pick_weighted_object() -> String:
+	var total_weight := 0
+	for key in Items.objects:
+		total_weight += Items.objects[key].get("weight", 1)
+	var roll := randi() % total_weight
+	var cumulative := 0
+	for key in Items.objects:
+		cumulative += Items.objects[key].get("weight", 1)
+		if roll < cumulative:
+			return key
+	return Items.objects.keys().back()
 
 func trySpawnObjectWave():
 	if spawnedObjects < maxObjects:
