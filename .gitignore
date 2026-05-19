@@ -5,6 +5,7 @@
 .import/
 export.cfg
 *.import
+addons/**/*.uid
 
 # Imported translations (automatically generated from CSV files)
 *.translation
@@ -15,7 +16,6 @@ data_*/
 mono_crash.*.json
 
 # Local tools and editor config
-addons/
 .claude/
 godot-git-plugin-v3.2.1
 CLAUDE.md
