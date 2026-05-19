@@ -10,9 +10,11 @@ var itemId : String:
 		itemId = value
 		if value:
 			$itemTexture.texture = _loadItemTexture(value)
+			tooltip_text = Items.format_item_name(value)
 			setItemDurability()
 		else:
 			$itemTexture.texture = null
+			tooltip_text = ""
 			%durabilityBar.visible = false
 			$Label.text = ""
 

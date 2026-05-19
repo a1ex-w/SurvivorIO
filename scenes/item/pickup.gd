@@ -4,6 +4,8 @@ extends Area2D
 	set(value):
 		$Sprite2D.texture = load("res://assets/items/"+value+".png")
 		itemId = value
+		if is_node_ready():
+			$Label.text = Items.format_item_name(value)
 
 @export var stackCount := 1
 var dropper_id: String = ""

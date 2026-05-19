@@ -14,6 +14,7 @@ var itemId := "":
 			img.fill(Color(0.8, 0.5, 0.2, 1.0))
 			tex = ImageTexture.create_from_image(img)
 		$TextureRect.texture = tex
+		tooltip_text = Items.format_item_name(value)
 
 func _ready():
 	setState()

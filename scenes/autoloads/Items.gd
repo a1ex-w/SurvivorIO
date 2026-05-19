@@ -84,6 +84,13 @@ func spawnPickups(id, at, amount):
 		pickup.itemId = id
 		pickup.position = at + Vector2(randf_range(-15,15), randf_range(-15,15))
 
+# Converts a snake_case item ID to a display name. "stone_wall" -> "Stone Wall"
+func format_item_name(item_id: String) -> String:
+	var words := item_id.split("_")
+	for i in words.size():
+		words[i] = words[i].capitalize()
+	return " ".join(words)
+
 func spawnPlaceable(item_id: String, at: Vector2):
 	var objects := get_node("/root/Game/Level/Main/Objects")
 	var scene: PackedScene = load("res://scenes/object/" + placeables[item_id] + ".tscn")
