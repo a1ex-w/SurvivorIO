@@ -1,5 +1,5 @@
 # Base class for all player-placed objects (windmill, etc.).
-# Handles owner tracking, HP/destruction, and optional passive score generation.
+# Handles owner tracking, HP/destruction, animations, and optional passive score generation.
 #
 # Usage — extend this script and override values before super._ready():
 #   extends "res://scenes/object/placeable_object.gd"
@@ -10,7 +10,8 @@
 #       super._ready()
 #
 # owner_id is set automatically by Items.spawnPlaceable — no manual wiring needed.
-# take_damage() is server-only; call it from enemy/projectile hit logic.
+# Add node to "damageable" group so player/enemy attacks call getDamage automatically.
+# Override _do_break() to spawn drops on destruction.
 extends StaticBody2D
 
 # Peer ID of the player who placed this object. Set by Items.spawnPlaceable.
@@ -39,11 +40,40 @@ func _on_score_tick() -> void:
 	if player:
 		player.rewardPlayer(score_per_interval)
 
-# Server-only. Reduces HP and frees the object when it reaches 0.
-# MultiplayerSpawner propagates the removal to all clients automatically.
+# Called by the damage system (player/enemy attacks via "damageable" group).
+# Runs on all peers — AnimationPlayer sync in the scene replicates visuals to clients.
+func getDamage(_causer, amount: float, _type) -> void:
+	if hp <= 0:
+		return
+	hp -= amount
+	_on_hit()
+	if hp <= 0:
+		_on_break()
+
+# Plays hit feedback. Override to customise particles/sound.
+func _on_hit() -> void:
+	var anim := get_node_or_null("AnimationPlayer")
+	if anim:
+		anim.play("shake")
+	var particles := get_node_or_null("hitParticle")
+	if particles:
+		particles.emitting = true
+
+# Plays break animation if present, otherwise destroys immediately.
+func _on_break() -> void:
+	var anim := get_node_or_null("AnimationPlayer")
+	if anim:
+		anim.play("break")
+	else:
+		_do_break()
+
+# Called at the end of the break animation (or immediately if no animation).
+# Override in subclass to spawn drops before freeing.
+func _do_break() -> void:
+	queue_free()
+
+# Server-only programmatic damage (e.g. from game logic, not player attack).
 func take_damage(amount: float) -> void:
 	if not multiplayer.is_server():
 		return
-	hp -= amount
-	if hp <= 0:
-		queue_free()
+	getDamage(null, amount, "normal")
