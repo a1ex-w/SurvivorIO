@@ -12,7 +12,7 @@ extends CharacterBody2D
 # Multiplayer: all logic runs server-only. Position is synced to clients via
 # MultiplayerSynchronizer. Animations are driven by position changes on clients.
 
-enum State { IDLE, CHASE, ATTACK }
+enum State { IDLE, CHASE, ATTACK, ATTACK_STRUCTURE }
 var state := State.IDLE
 
 var spawner: Node2D
@@ -60,21 +60,34 @@ var lose_radius := 500.0
 const WANDER_ARRIVAL_DIST := 48.0
 var _wander_target := Vector2.ZERO
 
+# Current structure target (Node2D in "damageable" group that isn't a player/enemy).
+# Cleared when the structure is destroyed or a player target is found.
+# Player targets always take priority over structure targets.
+var _structure_target: Node2D = null
+
 func _process(_delta: float) -> void:
 	if not multiplayer.is_server():
 		return
 	match state:
-		State.IDLE:   _tick_idle()
-		State.CHASE:  _tick_chase()
-		State.ATTACK: _tick_attack()
+		State.IDLE:             _tick_idle()
+		State.CHASE:            _tick_chase()
+		State.ATTACK:           _tick_attack()
+		State.ATTACK_STRUCTURE: _tick_attack_structure()
 
-# Wanders randomly and scans for the nearest player within detect_radius each tick.
-# Transitions to CHASE as soon as a player is found.
+# Wanders randomly, scanning for players first then structures.
+# Player targets always take priority. Transitions to ATTACK_STRUCTURE when a
+# damageable structure is within attackRange and no player is nearby.
 func _tick_idle() -> void:
-	var nearest := _find_nearest_player()
-	if nearest:
-		targetPlayer = nearest
+	var nearest_player := _find_nearest_player()
+	if nearest_player:
+		targetPlayer = nearest_player
+		_structure_target = null
 		state = State.CHASE
+		return
+	var nearest_structure := _find_nearest_structure()
+	if nearest_structure:
+		_structure_target = nearest_structure
+		state = State.ATTACK_STRUCTURE
 		return
 	if _wander_target == Vector2.ZERO or position.distance_to(_wander_target) < WANDER_ARRIVAL_DIST:
 		_pick_wander_target()
@@ -96,6 +109,39 @@ func _find_nearest_player() -> CharacterBody2D:
 			nearest_dist = d
 			nearest = p
 	return nearest
+
+# Returns the nearest damageable structure within attackRange, or null if none found.
+# Excludes players and enemies — only targets placed/world objects.
+# Uses attackRange as the scan radius so enemies don't walk toward structures.
+func _find_nearest_structure() -> Node2D:
+	var nearest: Node2D = null
+	var nearest_dist := attackRange
+	for obj in get_tree().get_nodes_in_group("damageable"):
+		if not is_instance_valid(obj): continue
+		if obj.is_in_group("player") or obj.is_in_group("enemy"): continue
+		var d := position.distance_to((obj as Node2D).position)
+		if d < nearest_dist:
+			nearest_dist = d
+			nearest = obj
+	return nearest
+
+# Attacks a nearby structure. Returns to IDLE if structure is destroyed or a
+# player enters detect_radius (player priority).
+func _tick_attack_structure() -> void:
+	var nearest_player := _find_nearest_player()
+	if nearest_player:
+		targetPlayer = nearest_player
+		_structure_target = null
+		state = State.CHASE
+		return
+	if not is_instance_valid(_structure_target):
+		_structure_target = null
+		state = State.IDLE
+		return
+	$MovingParts.look_at(_structure_target.position)
+	if $AttackCooldown.is_stopped():
+		$AttackCooldown.start()
+		_structure_target.getDamage(self, attackDamage, "normal")
 
 # Picks a random reachable tile as the next wander destination.
 func _pick_wander_target() -> void:
