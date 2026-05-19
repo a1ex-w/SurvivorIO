@@ -68,12 +68,33 @@ func _max_objects() -> int:
 		Multihelper.spawnedPlayers.size() * Constants.OBJECTS_PER_PLAYER)
 
 # Called by breakable.gd when an object is destroyed.
-# Immediately spawns one replacement so the map count stays constant.
-# Gotcha: guards against spawning before the map has walkable tiles loaded.
-func on_object_broken() -> void:
+# Immediately spawns one replacement at least OBJECT_RESPAWN_MIN_DIST away from
+# the broken object's position so the player doesn't see it appear beside them.
+# Falls back to unrestricted spawn if no distant tiles are available.
+func on_object_broken(broken_pos: Vector2) -> void:
 	spawnedObjects -= 1
 	if Multihelper.map and not Multihelper.map.walkable_tiles.is_empty():
-		spawnObjects(1)
+		_spawn_away_from(broken_pos)
+
+# Spawns one object on a walkable tile at least OBJECT_RESPAWN_MIN_DIST away from
+# excluded_pos. Falls back to a fully random tile if no qualifying tiles exist.
+func _spawn_away_from(excluded_pos: Vector2) -> void:
+	var tile_map := Multihelper.map.tile_map
+	var candidates := Multihelper.map.walkable_tiles.filter(func(tile: Vector2i) -> bool:
+		return tile_map.map_to_local(tile).distance_to(excluded_pos) > Constants.OBJECT_RESPAWN_MIN_DIST
+	)
+	var spawn_pos: Vector2
+	if candidates.is_empty():
+		spawn_pos = tile_map.map_to_local(Multihelper.map.walkable_tiles.pick_random())
+	else:
+		spawn_pos = tile_map.map_to_local(candidates.pick_random())
+	var breakableScene := preload("res://scenes/object/breakable.tscn")
+	var breakable := breakableScene.instantiate()
+	$Objects.add_child(breakable, true)
+	breakable.objectId = _pick_weighted_object()
+	breakable.position = spawn_pos
+	breakable.spawner = self
+	spawnedObjects += 1
 
 # Fills the map up to the current player-scaled cap.
 # Called when players join or leave so the resource pool adjusts immediately.
