@@ -2,15 +2,18 @@ extends Area2D
 
 @export var itemId : String:
 	set(value):
-		$Sprite2D.texture = load("res://assets/items/"+value+".png")
 		itemId = value
 		if is_node_ready():
+			$Sprite2D.texture = load("res://assets/items/"+value+".png")
 			$Label.text = Items.format_item_name(value)
 
 @export var stackCount := 1
 var dropper_id: String = ""
 
 func _ready():
+	if itemId:
+		$Sprite2D.texture = load("res://assets/items/"+itemId+".png")
+		$Label.text = Items.format_item_name(itemId)
 	if dropper_id != "":
 		get_tree().create_timer(3.0).timeout.connect(func(): dropper_id = "")
 
