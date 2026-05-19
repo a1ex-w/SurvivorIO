@@ -11,6 +11,7 @@ func _ready() -> void:
 
 func _do_break() -> void:
 	if multiplayer.is_server():
-		Items.spawnPickups("wood", position, 3)
-		Items.spawnPickups("stone", position, 1)
+		var drops := Items.calc_drops(Items.recipes["windmill"], 0.5)
+		for item in drops:
+			Items.spawnPickups(item, position, drops[item])
 	queue_free()
