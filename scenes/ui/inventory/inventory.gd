@@ -22,8 +22,10 @@ func _unhandled_input(event):
 			if chatinput.text:
 				player.sendMessage.rpc_id(1, chatinput.text)
 			chatinput.queue_free()
+			get_viewport().set_input_as_handled()
 		elif event.is_action_pressed("esc"):
 			chatinput.queue_free()
+			get_viewport().set_input_as_handled()
 		return
 	# Chat closed — handle normal keys
 	if not get_tree().get_nodes_in_group("settings_open").is_empty():
