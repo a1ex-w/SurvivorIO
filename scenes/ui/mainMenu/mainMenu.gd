@@ -20,6 +20,7 @@ const RESOLUTION_LABELS: Array[String] = [
 @onready var volume_percent: Label = $SettingsOverlay/SettingsPanel/VBox/VolumeRow/VolumePercent
 @onready var music_player: AudioStreamPlayer = $MusicPlayer
 @onready var disconnect_button: Button = $SettingsOverlay/SettingsPanel/VBox/DisconnectButton
+@onready var how_to_play: Control = $HowToPlay
 
 var _opened_from_game := false
 var _music_stopped := false
@@ -136,3 +137,12 @@ func _on_resolution_selected(index: int) -> void:
 	# Re-center window on screen
 	var screen := DisplayServer.screen_get_size()
 	DisplayServer.window_set_position(Vector2i((screen - res) / 2))
+
+# Shows the How to Play overlay. Hides the settings panel so the two don't stack.
+func _on_how_to_play_pressed() -> void:
+	settings_overlay.visible = false
+	how_to_play.show()
+
+# Restores the settings panel when the How to Play overlay is dismissed.
+func _on_how_to_play_closed() -> void:
+	settings_overlay.visible = true
