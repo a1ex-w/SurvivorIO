@@ -1,3 +1,7 @@
+# Single inventory slot in the hotbar/inventory UI.
+# Sets tooltip_text via Items.format_item_name() whenever itemId changes so players
+# see a readable name on hover. To display a new item type, just ensure its PNG exists
+# at res://assets/items/<item_id>.png — no changes needed here.
 extends PanelContainer
 
 signal itemSelected(id)

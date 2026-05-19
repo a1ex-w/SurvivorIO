@@ -1,3 +1,7 @@
+# Single recipe slot in the crafting menu.
+# Shows the item icon and sets tooltip_text via Items.format_item_name() for readable
+# hover names. Turns red (self_modulate) when the player lacks ingredients.
+# To add a new craftable item: add it to Items.recipes — this slot handles it automatically.
 extends PanelContainer
 
 signal recipeSelected(id)

@@ -1,3 +1,11 @@
+# World pickup item — spawned by Items.spawnPickups, auto-collected by players on contact.
+#
+# Item name display: Items.format_item_name() converts the item ID to a readable label
+# shown above the sprite (e.g. "stone_wall" -> "Stone Wall").
+#
+# TIMING GOTCHA: Items.spawnPickups sets itemId BEFORE add_child (which is call_deferred),
+# so is_node_ready() is always false in the setter. _ready() is the authoritative setup path.
+# The setter handles runtime changes only (e.g. if itemId is changed after spawn).
 extends Area2D
 
 @export var itemId : String:
