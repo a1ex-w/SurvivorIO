@@ -127,24 +127,50 @@ func _handle_command(text: String) -> void:
 		return
 	match parts[0]:
 		"/give":
-			if parts.size() < 3:
-				_send_server_msg("Usage: /give <player_name> <amount>")
+			if parts.size() < 2:
+				_send_server_msg("Usage: /give points <name> <amount>  |  /give item <name> <item_id> <amount>")
 				return
-			_cmd_give(parts[1], parts[2].to_int())
+			match parts[1]:
+				"points":
+					if parts.size() < 4:
+						_send_server_msg("Usage: /give points <name> <amount>")
+						return
+					_cmd_give_points(parts[2], parts[3].to_int())
+				"item":
+					if parts.size() < 5:
+						_send_server_msg("Usage: /give item <name> <item_id> <amount>")
+						return
+					_cmd_give_item(parts[2], parts[3], parts[4].to_int())
+				_:
+					_send_server_msg("Usage: /give points <name> <amount>  |  /give item <name> <item_id> <amount>")
 
-func _cmd_give(target_name: String, amount: int) -> void:
+func _find_pid(target_name: String) -> int:
 	for pid in Multihelper.spawnedPlayers:
 		if Multihelper.spawnedPlayers[pid]["name"] == target_name:
-			var player_node := get_node_or_null("/root/Game/Level/Main/Players/" + str(pid))
-			if player_node:
-				Multihelper.spawnedPlayers[pid]["score"] += amount
-				var new_score: int = Multihelper.spawnedPlayers[pid]["score"]
-				player_node._sync_score.rpc(new_score)
-				_send_server_msg("Gave %d score to %s (total: %d)" % [amount, target_name, new_score])
-				if new_score >= Victories.WIN_SCORE:
-					Multihelper.trigger_win(pid)
-			return
-	_send_server_msg("Player '%s' not found." % target_name)
+			return pid
+	return -1
+
+func _cmd_give_points(target_name: String, amount: int) -> void:
+	var pid := _find_pid(target_name)
+	if pid == -1:
+		_send_server_msg("Player '%s' not found." % target_name)
+		return
+	var player_node := get_node_or_null("/root/Game/Level/Main/Players/" + str(pid))
+	if player_node:
+		Multihelper.spawnedPlayers[pid]["score"] += amount
+		var new_score: int = Multihelper.spawnedPlayers[pid]["score"]
+		player_node._sync_score.rpc(new_score)
+		_send_server_msg("Gave %d points to %s (total: %d)" % [amount, target_name, new_score])
+		if new_score >= Victories.WIN_SCORE:
+			Multihelper.trigger_win(pid)
+
+func _cmd_give_item(target_name: String, item_id: String, amount: int) -> void:
+	var pid := _find_pid(target_name)
+	if pid == -1:
+		_send_server_msg("Player '%s' not found." % target_name)
+		return
+	Inventory.addItem(str(pid), item_id, amount)
+	_send_server_msg("Gave %dx %s to %s." % [amount, item_id, target_name])
 
 func _send_server_msg(msg: String) -> void:
 	var messageBoxScene := preload("res://scenes/ui/chat/message_box.tscn")
