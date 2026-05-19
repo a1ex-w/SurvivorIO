@@ -24,7 +24,7 @@ var connectedPlayers = []
 
 var player_info = {"name": ""}
 
-@onready var game = get_node("/root/Game")
+@onready var game = get_node_or_null("/root/Game")
 func _ready():
 	multiplayer.peer_connected.connect(_on_player_connected)
 	multiplayer.peer_disconnected.connect(_on_player_disconnected)
