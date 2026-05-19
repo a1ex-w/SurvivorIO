@@ -475,6 +475,8 @@ func die():
 		Multihelper.showSpawnUI.rpc_id(peerId)
 		
 func dropInventory():
+	if name not in Inventory.inventories:
+		return
 	var inventoryDict = Inventory.inventories[name]
 	for item in inventoryDict.keys():
 		Items.spawnPickups(item, position, inventoryDict[item])
