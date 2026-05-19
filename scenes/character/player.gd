@@ -235,7 +235,10 @@ func handleAnims(vel, doing_action):
 
 # Returns true while the chat input node is alive, used to suppress movement
 # and item actions so typed characters don't trigger game controls.
+# Also returns true while the in-game settings overlay is open.
 func _is_chat_open() -> bool:
+	if not get_tree().get_nodes_in_group("settings_open").is_empty():
+		return true
 	return inventory != null and is_instance_valid(inventory) \
 		and inventory.chatinput != null and is_instance_valid(inventory.chatinput)
 
