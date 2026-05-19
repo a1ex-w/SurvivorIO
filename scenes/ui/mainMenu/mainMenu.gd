@@ -80,6 +80,7 @@ func _on_exit_pressed() -> void:
 	get_tree().quit()
 
 func _on_disconnect_pressed() -> void:
+	remove_from_group("settings_open")
 	Multihelper.remove_multiplayer_peer()
 	# Clear the game level
 	var level := get_tree().get_root().get_node_or_null("Game/Level")
@@ -98,6 +99,7 @@ func _on_disconnect_pressed() -> void:
 
 func open_settings() -> void:
 	_opened_from_game = true
+	add_to_group("settings_open")
 	$SubViewportContainer.hide()
 	$TitleLabel.hide()
 	$PanelContainer.hide()
@@ -115,6 +117,7 @@ func _on_settings_pressed() -> void:
 
 func _on_settings_closed() -> void:
 	settings_overlay.visible = false
+	remove_from_group("settings_open")
 	if _opened_from_game:
 		$SubViewportContainer.show()
 		$TitleLabel.show()

@@ -6,17 +6,26 @@ const PLAYER_COLOR := Color(1.0, 0.0, 0.0)   # Red color for player
 @export var player: Node2D
 
 @onready var coordsLabel := $"../../CoordsLabel"
+
 func _ready():
-	tilemap = get_node("../../../../../Map/TileMap")
+	if Multihelper.map:
+		tilemap = Multihelper.map.tile_map
+	else:
+		Multihelper.data_loaded.connect(_on_map_ready, CONNECT_ONE_SHOT)
+
+func _on_map_ready():
+	tilemap = Multihelper.map.tile_map
 
 func _process(_delta):
 	queue_redraw()
 
 func _draw():
-	if is_instance_valid(player):
-		var player_pos = player.global_position / Vector2(tilemap.tile_set.tile_size) * tile_size
-		var player_rect = Rect2(player_pos, tile_size*4)
+	if is_instance_valid(player) and tilemap != null:
+		var tile_coords := tilemap.local_to_map(player.global_position)
+		var player_pos := Vector2(tile_coords) * tile_size
+		var player_rect := Rect2(player_pos, tile_size * 2)
 		draw_rect(player_rect, PLAYER_COLOR)
-		coordsLabel.text = str(Vector2i(player_pos))
+		coordsLabel.text = str(tile_coords)
 	else:
-		player = get_node_or_null("../../../../../Players/"+str(multiplayer.get_unique_id()))
+		var pid := str(multiplayer.get_unique_id())
+		player = Multihelper.main.get_node_or_null("Players/" + pid) if Multihelper.main else null
