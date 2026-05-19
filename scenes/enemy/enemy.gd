@@ -50,8 +50,13 @@ var attack := ""
 var attackRange := 50.0
 var attackDamage := 20.0
 var drops := {}
+# detect_radius and lose_radius are set from Items.mobs data via the enemyId setter.
+# detect_radius: how close a player must be for the enemy to start chasing.
+# lose_radius: how far the player can move before the enemy gives up and wanders again.
+# lose_radius should always be >= detect_radius to avoid rapid state flickering.
+var detect_radius := 300.0
+var lose_radius := 500.0
 
-# Distance at which the enemy notices and picks a new wander destination.
 const WANDER_ARRIVAL_DIST := 48.0
 var _wander_target := Vector2.ZERO
 
@@ -63,9 +68,12 @@ func _process(_delta: float) -> void:
 		State.CHASE:  _tick_chase()
 		State.ATTACK: _tick_attack()
 
-# Wanders to random walkable tiles until a target player is assigned.
+# Wanders randomly and scans for the nearest player within detect_radius each tick.
+# Transitions to CHASE as soon as a player is found.
 func _tick_idle() -> void:
-	if is_instance_valid(targetPlayer):
+	var nearest := _find_nearest_player()
+	if nearest:
+		targetPlayer = nearest
 		state = State.CHASE
 		return
 	if _wander_target == Vector2.ZERO or position.distance_to(_wander_target) < WANDER_ARRIVAL_DIST:
@@ -76,6 +84,19 @@ func _tick_idle() -> void:
 		$MovingParts.look_at(_wander_target)
 		move_and_slide()
 
+# Returns the nearest living player within detect_radius, or null if none found.
+# Scans all nodes in the "player" group — no manual player list needed.
+func _find_nearest_player() -> CharacterBody2D:
+	var nearest: CharacterBody2D = null
+	var nearest_dist := detect_radius
+	for p in get_tree().get_nodes_in_group("player"):
+		if not is_instance_valid(p): continue
+		var d := position.distance_to((p as Node2D).position)
+		if d < nearest_dist:
+			nearest_dist = d
+			nearest = p
+	return nearest
+
 # Picks a random reachable tile as the next wander destination.
 func _pick_wander_target() -> void:
 	if Multihelper.map and not Multihelper.map.walkable_tiles.is_empty():
@@ -83,9 +104,12 @@ func _pick_wander_target() -> void:
 			Multihelper.map.walkable_tiles.pick_random()
 		)
 
-# Chases target player. Transitions to ATTACK when close enough, IDLE if target lost.
+# Chases target player. Drops to IDLE if target is lost or moves beyond lose_radius.
+# IDLE will immediately re-scan and may pick up the same or a closer player.
 func _tick_chase() -> void:
-	if not is_instance_valid(targetPlayer):
+	if not is_instance_valid(targetPlayer) \
+			or position.distance_to(targetPlayer.position) > lose_radius:
+		targetPlayer = null
 		state = State.IDLE
 		_wander_target = Vector2.ZERO
 		return
@@ -95,9 +119,10 @@ func _tick_chase() -> void:
 	else:
 		_move_toward_target()
 
-# Attacks target player. Transitions to CHASE if target moves out of range.
+# Attacks target player. Falls back to CHASE if target moves out of attack range.
 func _tick_attack() -> void:
 	if not is_instance_valid(targetPlayer):
+		targetPlayer = null
 		state = State.IDLE
 		_wander_target = Vector2.ZERO
 		return

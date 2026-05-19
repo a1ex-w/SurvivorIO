@@ -1,8 +1,10 @@
 extends Node
 
 var mobs := {
-	"zombie": {"maxhp": 40, "speed": 50, "attack": "slash_attack", "attackDamage": 4, "attackRange": 50, "drops": {"wood": {"min": 1, "max": 2}}},
-	"spider": {"maxhp": 80, "speed": 100, "attack": "projectile_attack", "attackDamage": 6, "attackRange": 300, "drops": {"stone": {"min": 1, "max": 2}}},
+	# detect_radius: distance at which enemy notices a player and begins chasing
+	# lose_radius: distance at which enemy gives up and returns to IDLE (should be >= detect_radius)
+	"zombie": {"maxhp": 40, "speed": 50, "attack": "slash_attack", "attackDamage": 4, "attackRange": 50, "detect_radius": 300.0, "lose_radius": 500.0, "drops": {"wood": {"min": 1, "max": 2}}},
+	"spider": {"maxhp": 80, "speed": 100, "attack": "projectile_attack", "attackDamage": 6, "attackRange": 300, "detect_radius": 450.0, "lose_radius": 650.0, "drops": {"stone": {"min": 1, "max": 2}}},
 }
 
 var objects := {
