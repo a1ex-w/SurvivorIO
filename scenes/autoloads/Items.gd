@@ -100,16 +100,18 @@ func format_item_name(item_id: String) -> String:
 		words[i] = words[i].capitalize()
 	return " ".join(words)
 
-func spawnPlaceable(item_id: String, at: Vector2):
+func spawnPlaceable(item_id: String, at: Vector2, owner_id: int = 0):
 	var objects := get_node("/root/Game/Level/Main/Objects")
 	var scene: PackedScene = load("res://scenes/object/" + placeables[item_id] + ".tscn")
 	var instance := scene.instantiate()
 	objects.add_child(instance, true)
 	instance.position = at
+	if instance.get("owner_id") != null:
+		instance.owner_id = owner_id
 
 @rpc("authority", "call_local", "reliable")
-func spawnPlaceableRpc(item_id: String, at: Vector2):
-	spawnPlaceable(item_id, at)
+func spawnPlaceableRpc(item_id: String, at: Vector2, owner_id: int = 0):
+	spawnPlaceable(item_id, at, owner_id)
 
 func spawnProjectile(spawner, pId, towardsPos, canTarget):
 	var projectilesNode := get_node("/root/Game/Level/Main/Projectiles")

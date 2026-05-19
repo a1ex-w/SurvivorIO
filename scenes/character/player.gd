@@ -372,7 +372,7 @@ func _place_selected(item_id: String, at: Vector2):
 	if _placement_blocked(at):
 		return
 	Inventory.removeItem(str(name), item_id, 1)
-	Items.spawnPlaceableRpc.rpc(item_id, at)
+	Items.spawnPlaceableRpc.rpc(item_id, at, int(name))
 
 func _placement_blocked(at: Vector2) -> bool:
 	var space := get_world_2d().direct_space_state
