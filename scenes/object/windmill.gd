@@ -10,8 +10,9 @@ extends "res://scenes/object/placeable_object.gd"
 const SCALE := Vector2(0.14, 0.14)
 
 func _ready() -> void:
-	score_per_interval = 1   # +1 score to owner every 10 seconds
+	score_per_interval = 10  # +10 score to owner every 10 seconds
 	score_interval = 10.0
+	max_hp = 150             # Durable — costs more than a stone wall to craft
 	super._ready()
 	$Sprite2D.texture = load("res://assets/objects/windmill_world.png")
 	$Sprite2D.scale = SCALE
