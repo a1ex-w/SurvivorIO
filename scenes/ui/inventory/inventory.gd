@@ -119,7 +119,7 @@ func recipeSelected(id):
 		%craftButton.disabled = false
 	else:
 		%craftButton.disabled = true
-	%recipeName.text = id
+	%recipeName.text = Items.format_item_name(id)
 	for c in %ingList.get_children():
 		c.queue_free()
 	%RecipeBox.visible = true
