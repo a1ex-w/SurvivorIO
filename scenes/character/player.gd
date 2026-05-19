@@ -121,6 +121,8 @@ func sendMessage(text):
 		%PlayerMessages.add_child(messageBox, true)
 		messageBox.text = str(text)
 
+# Server-side chat command dispatcher. Only runs on the server (sendMessage guards this).
+# To add a new command: add a match branch here and implement a _cmd_<name> handler below.
 func _handle_command(text: String) -> void:
 	var parts := text.split(" ", false)
 	if parts.is_empty():
@@ -144,12 +146,14 @@ func _handle_command(text: String) -> void:
 				_:
 					_send_server_msg("Usage: /give points <name> <amount>  |  /give item <name> <item_id> <amount>")
 
+# Returns the peer ID for a player by display name, or -1 if not found.
 func _find_pid(target_name: String) -> int:
 	for pid in Multihelper.spawnedPlayers:
 		if Multihelper.spawnedPlayers[pid]["name"] == target_name:
 			return pid
 	return -1
 
+# Grants score to a player and triggers win condition if threshold is met.
 func _cmd_give_points(target_name: String, amount: int) -> void:
 	var pid := _find_pid(target_name)
 	if pid == -1:
@@ -164,10 +168,16 @@ func _cmd_give_points(target_name: String, amount: int) -> void:
 		if new_score >= Victories.WIN_SCORE:
 			Multihelper.trigger_win(pid)
 
+# Adds items directly to a player's inventory. Inventory.addItem auto-syncs to the client.
+# Validates item_id against known items/placeables/recipes to prevent inventory corruption.
 func _cmd_give_item(target_name: String, item_id: String, amount: int) -> void:
 	var pid := _find_pid(target_name)
 	if pid == -1:
 		_send_server_msg("Player '%s' not found." % target_name)
+		return
+	var known := item_id in Items.equips or item_id in Items.placeables or item_id in Items.recipes
+	if not known:
+		_send_server_msg("Unknown item '%s'." % item_id)
 		return
 	Inventory.addItem(str(pid), item_id, amount)
 	_send_server_msg("Gave %dx %s to %s." % [amount, item_id, target_name])
@@ -400,6 +410,10 @@ func _place_selected(item_id: String, at: Vector2):
 	Inventory.removeItem(str(name), item_id, 1)
 	Items.spawnPlaceableRpc.rpc(item_id, at, int(name))
 
+# Returns true if a 40x40 area at the target position overlaps any non-terrain physics body.
+# TileMap/TileMapLayer are excluded because they represent the ground, not obstacles.
+# The player itself is excluded via get_rid() to avoid blocking self-placement.
+# Used by _place_selected to prevent stacking placeables on top of each other or players.
 func _placement_blocked(at: Vector2) -> bool:
 	var space := get_world_2d().direct_space_state
 	var query := PhysicsShapeQueryParameters2D.new()

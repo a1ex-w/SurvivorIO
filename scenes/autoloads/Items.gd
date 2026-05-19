@@ -114,6 +114,10 @@ func calc_drops(recipe: Dictionary, rate: float) -> Dictionary:
 			drops[item] = count
 	return drops
 
+# Instantiates a placeable scene from Items.placeables and adds it to the Objects node.
+# owner_id is set only if the instance has an owner_id property (PlaceableObject subclasses).
+# Older placeables (walls, chest, etc.) without owner_id are unaffected — backward compatible.
+# Called on ALL peers via spawnPlaceableRpc — do not call directly for multiplayer placement.
 func spawnPlaceable(item_id: String, at: Vector2, owner_id: int = 0):
 	var objects := get_node("/root/Game/Level/Main/Objects")
 	var scene: PackedScene = load("res://scenes/object/" + placeables[item_id] + ".tscn")
@@ -123,6 +127,8 @@ func spawnPlaceable(item_id: String, at: Vector2, owner_id: int = 0):
 	if instance.get("owner_id") != null:
 		instance.owner_id = owner_id
 
+# RPC wrapper for spawnPlaceable — runs on server and all clients simultaneously.
+# Pass the placing player's peer ID as owner_id so PlaceableObject can track ownership.
 @rpc("authority", "call_local", "reliable")
 func spawnPlaceableRpc(item_id: String, at: Vector2, owner_id: int = 0):
 	spawnPlaceable(item_id, at, owner_id)
