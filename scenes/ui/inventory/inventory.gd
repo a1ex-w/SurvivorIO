@@ -12,6 +12,7 @@ var chatinput
 func _ready():
 	Inventory.updateReceived.connect(inventoryUpdated)
 	populateSlots()
+	populateRecipes()
 
 func _unhandled_input(event):
 	if not event is InputEventKey:

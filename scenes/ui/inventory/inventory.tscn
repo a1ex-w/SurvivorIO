@@ -1,6 +1,7 @@
-[gd_scene load_steps=6 format=3 uid="uid://bmv1uy5a1k05u"]
+[gd_scene load_steps=7 format=3 uid="uid://bmv1uy5a1k05u"]
 
 [ext_resource type="Script" path="res://scenes/ui/inventory/inventory.gd" id="1_d5dig"]
+[ext_resource type="Script" path="res://scenes/ui/inventory/slot_tooltip.gd" id="2_tooltip"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_v03e5"]
 
@@ -138,7 +139,7 @@ size_flags_horizontal = 6
 size_flags_vertical = 6
 columns = 4
 
-[node name="RecipeBox" type="PanelContainer" parent="BottomBar/VBoxContainer/PanelContainer/craftCont/VBoxContainer"]
+[node name="RecipeBox" type="PanelContainer" parent="BottomBar/VBoxContainer/PanelContainer/craftCont/VBoxContainer" groups=["recipe_detail_box"]]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
@@ -179,6 +180,12 @@ theme_override_constants/separation = 1
 libraries = {
 "": SubResource("AnimationLibrary_vpn1w")
 }
+
+[node name="SlotTooltip" type="Label" parent="."]
+z_index = 100
+mouse_filter = 2
+theme_override_font_sizes/font_size = 11
+script = ExtResource("2_tooltip")
 
 [connection signal="pressed" from="BottomBar/VBoxContainer/PanelContainer/craftButton" to="." method="_on_craft_button_pressed"]
 [connection signal="pressed" from="BottomBar/VBoxContainer/PanelContainer/craftCont/VBoxContainer/RecipeBox/VBoxContainer/HBoxContainer2/craftButton" to="." method="_on_startcraft_button_pressed"]
