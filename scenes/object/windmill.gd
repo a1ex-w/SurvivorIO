@@ -7,8 +7,9 @@
 # before calling super._ready(). See placeable_object.gd for the full extension pattern.
 extends "res://scenes/object/placeable_object.gd"
 
-# Scale chosen so the 916x865 sprite fills the 128x128 collision shape: 128/865 ≈ 0.148
-const SCALE := Vector2(0.148, 0.148)
+# Scaled to match wall visual density: wall is 695px@0.092=64px, windmill is 916px@128px hitbox.
+# 0.092 * (916/695) * (128/64) ≈ 0.243 — sails extend slightly beyond the 128px hitbox naturally.
+const SCALE := Vector2(0.243, 0.243)
 
 func _ready() -> void:
 	score_per_interval = 10  # +10 score to owner every 10 seconds
