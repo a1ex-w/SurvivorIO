@@ -15,6 +15,9 @@ signal player_killed
 		$MovingParts/Sprite2D.texture = load("res://assets/characters/bodies/"+value)
 		
 const WALL_SNAP := 64.0
+# Maximum distance (px) a player can place walls, doors, or windmills from their position.
+# Clamped before grid-snapping so walls always land on the nearest tile within range.
+const STRUCTURE_PLACE_RANGE := 128.0
 
 var inventory : Control
 var is_local := false
@@ -326,7 +329,10 @@ func _on_interact():
 		if selected == "boat":
 			at = _clamp_place_range(at, 50.0)
 		elif selected in ["wall", "stone_wall", "door", "stone_door"]:
+			at = _clamp_place_range(at, STRUCTURE_PLACE_RANGE)
 			at = (at / WALL_SNAP).round() * WALL_SNAP
+		elif selected == "windmill":
+			at = _clamp_place_range(at, STRUCTURE_PLACE_RANGE)
 		if multiplayer.is_server():
 			_place_selected(selected, at)
 		else:
