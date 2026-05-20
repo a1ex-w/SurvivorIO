@@ -29,5 +29,13 @@ func _on_body_entered(body):
 	if multiplayer.is_server() and body.is_in_group("player"):
 		if body.name == dropper_id:
 			return
+		# Guard: don't destroy the pickup if the inventory is full and this is a new item type.
+		# Inventory.addItem silently fails at the slot cap, so we check first to avoid
+		# destroying items the player has no room for.
+		var inv: Dictionary = Inventory.inventories.get(body.name, {})
+		var has_item := itemId in inv
+		var has_room := inv.size() < Constants.MAX_INVENTORY_SLOTS
+		if not has_item and not has_room:
+			return
 		queue_free()
 		Inventory.addItem(body.name, itemId, stackCount)
