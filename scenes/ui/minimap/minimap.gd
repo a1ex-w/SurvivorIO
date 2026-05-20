@@ -16,6 +16,8 @@ func _ready():
 		tilemap = Multihelper.map.tile_map
 	else:
 		Multihelper.data_loaded.connect(_on_map_ready, CONNECT_ONE_SHOT)
+	# Redraw on every round reset — map_regenerated fires on all peers each regen.
+	Multihelper.map_regenerated.connect(_on_map_ready)
 
 func _on_map_ready():
 	tilemap = Multihelper.map.tile_map
