@@ -104,3 +104,6 @@ layout_mode = 2
 max_value = 1.0
 value = 0.5
 show_percentage = false
+
+[connection signal="mouse_entered" from="." to="." method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="." to="." method="_on_mouse_exited"]

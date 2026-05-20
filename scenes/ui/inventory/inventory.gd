@@ -12,6 +12,7 @@ var chatinput
 func _ready():
 	Inventory.updateReceived.connect(inventoryUpdated)
 	populateSlots()
+	populateRecipes()
 
 func _unhandled_input(event):
 	if not event is InputEventKey:
@@ -119,7 +120,7 @@ func recipeSelected(id):
 		%craftButton.disabled = false
 	else:
 		%craftButton.disabled = true
-	%recipeName.text = id
+	%recipeName.text = Items.format_item_name(id)
 	for c in %ingList.get_children():
 		c.queue_free()
 	%RecipeBox.visible = true

@@ -1,3 +1,9 @@
+# Single inventory slot in the hotbar/inventory UI.
+# On hover, calls the "slot_tooltip" group to show a floating label with the
+# item's formatted name. The tooltip label lives in inventory.tscn (not inside
+# this slot) so it doesn't affect slot sizing.
+# To display a new item type, just ensure its PNG exists at
+# res://assets/items/<item_id>.png — no other changes needed here.
 extends PanelContainer
 
 signal itemSelected(id)
@@ -38,6 +44,13 @@ func setItemDurability():
 		%durabilityBar.value = itemDurabilities[itemId] / Items.equips[itemId]["durability"]
 	else:
 		%durabilityBar.visible = false
+
+func _on_mouse_entered() -> void:
+	if itemId:
+		get_tree().call_group("slot_tooltip", "show_tooltip", Items.format_item_name(itemId))
+
+func _on_mouse_exited() -> void:
+	get_tree().call_group("slot_tooltip", "hide_tooltip")
 
 func selectionChanged(selectedId):
 	if selectedId == index:
