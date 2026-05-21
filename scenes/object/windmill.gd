@@ -7,8 +7,8 @@
 # before calling super._ready(). See placeable_object.gd for the full extension pattern.
 extends "res://scenes/object/placeable_object.gd"
 
-# 128 / 916 ≈ 0.14 — fits the sprite within the 128x128 (2×2 wall) collision box.
-const SCALE := Vector2(0.14, 0.14)
+# Sprite is pre-scaled to 128x128px — scale 1.0 fills the collision box exactly.
+const SCALE := Vector2(1.0, 1.0)
 
 func _ready() -> void:
 	score_per_interval = 10  # +10 score to owner every 10 seconds
