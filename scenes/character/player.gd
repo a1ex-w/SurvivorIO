@@ -333,7 +333,10 @@ func _on_interact():
 			at = (at / WALL_SNAP).round() * WALL_SNAP
 		elif selected == "windmill":
 			at = _clamp_place_range(at, STRUCTURE_PLACE_RANGE)
-			at = (at / (WALL_SNAP * 2)).round() * (WALL_SNAP * 2)
+			# Snap to wall-grid midpoints (32, 96, 160...) so windmill edges
+			# land exactly on wall boundaries. Two windmills 128px apart = flush.
+			var half := Vector2(WALL_SNAP * 0.5, WALL_SNAP * 0.5)
+			at = ((at - half) / WALL_SNAP).round() * WALL_SNAP + half
 		if multiplayer.is_server():
 			_place_selected(selected, at)
 		else:
