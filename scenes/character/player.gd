@@ -323,8 +323,6 @@ func _on_interact():
 		var selected := _get_selected_item()
 		if selected not in Items.placeables:
 			return
-		if selected == "torch" and _is_water_position(get_global_mouse_position()):
-			return
 		var at := get_global_mouse_position()
 		if selected == "boat":
 			at = _clamp_place_range(at, 50.0)
@@ -337,6 +335,10 @@ func _on_interact():
 			# land exactly on wall boundaries. Two windmills 128px apart = flush.
 			var half := Vector2(WALL_SNAP * 0.5, WALL_SNAP * 0.5)
 			at = ((at - half) / WALL_SNAP).round() * WALL_SNAP + half
+		var err := _placement_error(selected, at)
+		if err:
+			_show_placement_error(err)
+			return
 		if multiplayer.is_server():
 			_place_selected(selected, at)
 		else:
@@ -415,16 +417,15 @@ func _place_selected(item_id: String, at: Vector2):
 		return
 	if !Inventory.checkHasItem(str(name), item_id):
 		return
-	if _placement_blocked(at):
+	if _placement_blocked(at) != "":
 		return
 	Inventory.removeItem(str(name), item_id, 1)
 	Items.spawnPlaceableRpc.rpc(item_id, at, int(name))
 
-# Returns true if a 40x40 area at the target position overlaps any non-terrain physics body.
-# TileMap/TileMapLayer are excluded because they represent the ground, not obstacles.
-# The player itself is excluded via get_rid() to avoid blocking self-placement.
-# Used by _place_selected to prevent stacking placeables on top of each other or players.
-func _placement_blocked(at: Vector2) -> bool:
+# Returns the name of whatever is blocking placement at `at`, or "" if clear.
+# TileMap/TileMapLayer excluded (terrain). Player excluded via get_rid().
+# Return value is used both to block placement (server) and to label the error (client).
+func _placement_blocked(at: Vector2) -> String:
 	var space := get_world_2d().direct_space_state
 	var query := PhysicsShapeQueryParameters2D.new()
 	var shape := RectangleShape2D.new()
@@ -436,8 +437,35 @@ func _placement_blocked(at: Vector2) -> bool:
 		var collider = result.get("collider")
 		if collider is TileMap or collider is TileMapLayer:
 			continue
-		return true
-	return false
+		return (collider as Node).name
+	return ""
+
+# Checks all placement rules for item_id at world position at.
+# Returns a human-readable error string, or "" if placement is allowed.
+# Called client-side before the server RPC to give immediate feedback.
+# Gotcha: client physics state must match server — safe for call_local spawned objects.
+func _placement_error(item_id: String, at: Vector2) -> String:
+	if item_id != "boat" and _is_water_position(at):
+		return "Cannot place %s in water" % Items.format_item_name(item_id)
+	var blocker := _placement_blocked(at)
+	if blocker:
+		return "Too close to %s" % Items.format_item_name(blocker)
+	return ""
+
+# Spawns a temporary floating error label above the player that rises and fades.
+# Client-only — only call on the local player (is_local guard not needed, caller ensures it).
+func _show_placement_error(msg: String) -> void:
+	var label := Label.new()
+	label.text = msg
+	label.position = Vector2(-80, -90)
+	label.add_theme_color_override("font_color", Color(1, 0.35, 0.35))
+	label.add_theme_constant_override("outline_size", 2)
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	add_child(label)
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y - 40.0, 1.5)
+	tween.tween_property(label, "modulate:a", 0.0, 1.5)
+	tween.chain().tween_callback(label.queue_free)
 
 func _on_drop_item() -> void:
 	var inv: Dictionary = Inventory.inventories.get(str(name), {})
