@@ -45,7 +45,12 @@ var targetPlayer: CharacterBody2D
 	set(value):
 		enemyId = value
 		var data = Items.mobs[value]
-		%Sprite2D.texture = load("res://assets/characters/enemy/" + value + ".png")
+		var tex := load("res://assets/characters/enemy/" + value + ".png") as Texture2D
+		if tex == null:
+			var img := Image.create(32, 32, false, Image.FORMAT_RGBA8)
+			img.fill(Color(1.0, 0.0, 1.0))  # magenta = missing sprite
+			tex = ImageTexture.create_from_image(img)
+		%Sprite2D.texture = tex
 		for stat in data.keys():
 			set(stat, data[stat])
 

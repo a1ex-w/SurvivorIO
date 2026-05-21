@@ -16,7 +16,11 @@ const LAND_TILES: Array[Vector2i] = [
 ]
 const WATER_TILES: Array[Vector2i] = [Vector2i(18,0), Vector2i(19,0)]
 const MAX_OBJECTS := 30
-const MAX_ENEMIES_PER_PLAYER := 2
+# Max enemies that can be targeting any single player at once.
+const MAX_ENEMIES_PER_PLAYER := 3
+# Absolute enemy cap regardless of player count. Actual cap used is
+# min(MAX_ENEMIES_TOTAL, player_count * MAX_ENEMIES_PER_PLAYER).
+const MAX_ENEMIES_TOTAL := 12
 
 #Player
 const MAX_INVENTORY_SLOTS := 9
