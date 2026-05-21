@@ -211,6 +211,7 @@ func _move_toward_target() -> void:
 	move_and_slide()
 
 # Fires the enemy's projectile attack if the cooldown has elapsed.
+# Applies projectile_color from Items.mobs if set — allows per-mob tinted projectiles.
 func _try_attack() -> void:
 	if not $AttackCooldown.is_stopped():
 		return
@@ -222,6 +223,8 @@ func _try_attack() -> void:
 	projectile.get_node("MovingParts").rotation = $MovingParts.rotation
 	projectile.hitPlayer.connect(hitPlayer)
 	projectile.targetPos = targetPlayer.position
+	var color = Items.mobs[enemyId].get("projectile_color", Color.WHITE)
+	projectile.modulate = color
 
 # Called by the projectile on contact — deals damage to the hit body.
 func hitPlayer(body) -> void:

@@ -9,14 +9,15 @@ var mobs := {
 	#   attackRange    — distance at which the enemy switches from CHASE to ATTACK
 	#   detect_radius  — distance at which the enemy notices a player and begins chasing
 	#   lose_radius    — distance at which enemy gives up and returns to IDLE (>= detect_radius)
-	#   weight         — spawn frequency relative to other mobs (higher = more common).
-	#                    Omitting defaults to 1. No code changes needed for new mob types.
-	#   drops          — loot table: { "item_id": { "min": N, "max": N } }
+	#   weight             — spawn frequency relative to other mobs (higher = more common).
+	#                        Omitting defaults to 1. No code changes needed for new mob types.
+	#   projectile_color   — Color applied to the projectile sprite (optional, defaults to white).
+	#   drops              — loot table: { "item_id": { "min": N, "max": N } }
 	# Adding a new mob only requires a new entry here + a PNG at assets/characters/enemy/<id>.png
 	"zombie":   {"maxhp": 40,  "speed": 50,  "attack": "slash_attack",      "attackDamage": 4,  "attackRange": 50,  "detect_radius": 300.0, "lose_radius": 500.0, "weight": 10, "drops": {"wood":  {"min": 1, "max": 2}}},
 	"spider":   {"maxhp": 80,  "speed": 100, "attack": "projectile_attack",  "attackDamage": 6,  "attackRange": 300, "detect_radius": 450.0, "lose_radius": 650.0, "weight": 7,  "drops": {"stone": {"min": 1, "max": 2}}},
 	"brute":    {"maxhp": 180, "speed": 40,  "attack": "slash_attack",       "attackDamage": 15, "attackRange": 70,  "detect_radius": 200.0, "lose_radius": 350.0, "weight": 3,  "drops": {"wood":  {"min": 2, "max": 4}, "stone": {"min": 1, "max": 2}}},
-	"wraith":   {"maxhp": 50,  "speed": 140, "attack": "projectile_attack",  "attackDamage": 8,  "attackRange": 250, "detect_radius": 500.0, "lose_radius": 700.0, "weight": 2,  "drops": {"stone": {"min": 1, "max": 3}}},
+	"wraith":   {"maxhp": 50,  "speed": 140, "attack": "projectile_attack",  "attackDamage": 8,  "attackRange": 250, "detect_radius": 900.0, "lose_radius": 1200.0, "weight": 2, "projectile_color": Color(0.7, 0.0, 1.0), "drops": {"stone": {"min": 1, "max": 3}}},
 }
 
 var objects := {
