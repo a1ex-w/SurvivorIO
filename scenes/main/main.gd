@@ -54,6 +54,21 @@ func _on_object_spawn_timer_timeout():
 
 #enemy spawn
 
+# Spawns a specific mob type near the given player. Used by the /spawn server command.
+# Ignores the enemy cap so it works for testing regardless of current mob count.
+func spawn_mob_for_player(mob_id: String, pid: int) -> void:
+	var positions: Array = $NavHelper.getNRandomNavigableTileInPlayerRadius(pid, 1, enemySpawnRadiusMin, enemySpawnRadiusMax)
+	if positions.is_empty():
+		return
+	var enemyScene := preload("res://scenes/enemy/enemy.tscn")
+	var enemy := enemyScene.instantiate()
+	$Enemies.add_child(enemy, true)
+	enemy.position = positions[0]
+	enemy.spawner = self
+	enemy.targetPlayerId = pid
+	enemy.enemyId = mob_id
+	increasePlayerEnemyCount(pid)
+
 # Returns the total number of enemies currently alive on the map.
 func _total_enemies() -> int:
 	var total := 0

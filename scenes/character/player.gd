@@ -152,6 +152,11 @@ func _handle_command(text: String) -> void:
 					_cmd_give_item(parts[2], parts[3], parts[4].to_int())
 				_:
 					_send_server_msg("Usage: /give points <name> <amount>  |  /give item <name> <item_id> <amount>")
+		"/spawn":
+			if parts.size() < 3:
+				_send_server_msg("Usage: /spawn <mob_id> <player_name>  — mob_ids: %s" % ", ".join(Items.mobs.keys()))
+				return
+			_cmd_spawn(parts[1], parts[2])
 
 # Returns the peer ID for a player by display name, or -1 if not found.
 func _find_pid(target_name: String) -> int:
@@ -188,6 +193,20 @@ func _cmd_give_item(target_name: String, item_id: String, amount: int) -> void:
 		return
 	Inventory.addItem(str(pid), item_id, amount)
 	_send_server_msg("Gave %dx %s to %s." % [amount, item_id, target_name])
+
+# Spawns a mob of the given type near a player. Bypasses the enemy cap — testing only.
+func _cmd_spawn(mob_id: String, target_name: String) -> void:
+	if mob_id not in Items.mobs:
+		_send_server_msg("Unknown mob '%s'. Valid types: %s" % [mob_id, ", ".join(Items.mobs.keys())])
+		return
+	var pid := _find_pid(target_name)
+	if pid == -1:
+		_send_server_msg("Player '%s' not found." % target_name)
+		return
+	var main := get_node_or_null("/root/Game/Level/Main")
+	if main:
+		main.spawn_mob_for_player(mob_id, pid)
+		_send_server_msg("Spawned %s near %s." % [mob_id, target_name])
 
 func _send_server_msg(msg: String) -> void:
 	var messageBoxScene := preload("res://scenes/ui/chat/message_box.tscn")
