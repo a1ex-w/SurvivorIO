@@ -513,15 +513,21 @@ func sendProjectile(towards):
 	Items.spawnProjectile(self, spawnsProjectile, towards, "damageable")
 
 @rpc("authority", "call_local", "reliable")
+# Grants score AND combat stat bonuses — intended for kill rewards only.
+# Do NOT call this for passive income (e.g. windmills) — use gain_score() instead.
 func rewardPlayer(by):
 	hp += by * 5
 	maxHP += by * 5
 	attackDamage += by
 	speed += by
+	gain_score(by)
+
+# Grants score only — no stat bonuses. Use for passive income sources like windmills.
+func gain_score(amount: int) -> void:
 	if multiplayer.is_server():
 		var pid := int(str(name))
 		if pid in Multihelper.spawnedPlayers:
-			var new_score: int = Multihelper.spawnedPlayers[pid]["score"] + by
+			var new_score: int = Multihelper.spawnedPlayers[pid]["score"] + amount
 			Multihelper.spawnedPlayers[pid]["score"] = new_score
 			_sync_score.rpc(new_score)
 			if new_score >= Victories.WIN_SCORE:

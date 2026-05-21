@@ -38,7 +38,7 @@ func _on_score_tick() -> void:
 		return
 	var player := get_node_or_null("/root/Game/Level/Main/Players/" + str(owner_id))
 	if player:
-		player.rewardPlayer(score_per_interval)
+		player.gain_score(score_per_interval)
 
 # Called by the damage system (player/enemy attacks via "damageable" group).
 # Runs on all peers — AnimationPlayer sync in the scene replicates visuals to clients.
