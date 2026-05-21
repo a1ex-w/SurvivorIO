@@ -47,7 +47,11 @@ var equippedItem : String:
 			$AnimationPlayer.speed_scale = 1.0
 
 #stats
-@export var maxHP := 250.0
+const BASE_MAX_HP     := 250.0
+const BASE_SPEED      := 200
+const BASE_ATTACK_DMG := 10
+
+@export var maxHP := BASE_MAX_HP
 @export var hp := maxHP:
 	set(value):
 		hp = value
@@ -556,9 +560,13 @@ func getDamage(causer, amount, _type):
 
 # Restores full HP on all peers and teleports to a random walkable tile.
 # Called by the server at the start of each new round.
+# Resets all stats that rewardPlayer() modifies so bonuses don't carry over between rounds.
 @rpc("authority", "call_local", "reliable")
 func respawn() -> void:
-	hp = maxHP
+	maxHP = BASE_MAX_HP
+	hp = BASE_MAX_HP
+	speed = BASE_SPEED
+	attackDamage = BASE_ATTACK_DMG
 	if multiplayer.is_server() and Multihelper.map \
 			and not Multihelper.map.walkable_tiles.is_empty():
 		var spawn_pos: Vector2 = Multihelper.map.tile_map.map_to_local(
