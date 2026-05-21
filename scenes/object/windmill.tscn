@@ -85,7 +85,7 @@ _data = {
 _data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
 point_count = 2
 
-[node name="Windmill" type="StaticBody2D" groups=["damageable"]]
+[node name="Windmill" type="StaticBody2D" groups=["damageable", "placeable"]]
 script = ExtResource("1_windmill")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]

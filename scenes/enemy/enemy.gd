@@ -8,7 +8,7 @@ extends CharacterBody2D
 #   IDLE             — wanders randomly; scans for players, then nearby structures
 #   CHASE            — moves toward targetPlayer; attacks when in attackRange
 #   ATTACK           — attacks targetPlayer; returns to CHASE if target moves away
-#   ATTACK_STRUCTURE — attacks a nearby damageable object; player detection preempts this
+#   ATTACK_STRUCTURE — attacks a nearby player-placed structure; player detection preempts this
 #
 # Extending the state machine:
 #   1. Add a value to the State enum.
@@ -18,9 +18,8 @@ extends CharacterBody2D
 # Multiplayer: all logic is server-only. Position is synced to clients via
 # MultiplayerSynchronizer. Client visuals are driven by position updates.
 #
-# Structure targeting note: _find_nearest_structure scans the "damageable" group,
-# which includes world breakables (trees, rocks) as well as player-placed objects.
-# Enemies will attack whichever damageable non-player object is closest.
+# Structure targeting note: _find_nearest_structure scans the "placeable" group
+# (walls, windmills, doors, etc.) — world breakables are excluded.
 
 enum State { IDLE, CHASE, ATTACK, ATTACK_STRUCTURE }
 var state := State.IDLE
@@ -153,8 +152,13 @@ func _tick_attack() -> void:
 	else:
 		_try_attack()
 
-# Attacks _structure_target each cooldown tick. Preempted immediately if a player
-# enters detect_radius. Returns to IDLE when the structure is destroyed.
+# Distance from structure center at which an attack fires.
+# 100px covers windmill half-size (64px) + brute collision radius (20px) + margin.
+# Must be larger than windmill_half + max_enemy_radius or large enemies can't reach threshold.
+const STRUCTURE_ATTACK_DIST := 100.0
+
+# Moves toward and attacks _structure_target. Preempted if a player enters detect_radius.
+# Ranged mobs fire a projectile toward the structure; melee mobs call getDamage directly.
 func _tick_attack_structure() -> void:
 	var nearest_player := _find_nearest_player()
 	if nearest_player:
@@ -167,9 +171,17 @@ func _tick_attack_structure() -> void:
 		state = State.IDLE
 		return
 	$MovingParts.look_at(_structure_target.position)
-	if $AttackCooldown.is_stopped():
+	var dist := position.distance_to(_structure_target.position)
+	if dist > STRUCTURE_ATTACK_DIST:
+		var dir := (_structure_target.position - position).normalized()
+		velocity = dir * speed
+		move_and_slide()
+	elif $AttackCooldown.is_stopped():
 		$AttackCooldown.start()
-		_structure_target.getDamage(self, attackDamage, "normal")
+		if attack.contains("projectile"):
+			_fire_projectile_at(_structure_target.position)
+		else:
+			_structure_target.getDamage(self, attackDamage, "normal")
 
 # Returns the nearest player node within detect_radius, or null.
 func _find_nearest_player() -> CharacterBody2D:
@@ -183,16 +195,15 @@ func _find_nearest_player() -> CharacterBody2D:
 			nearest = p
 	return nearest
 
-# Returns the nearest damageable non-player non-enemy node within attackRange, or null.
-# Intentionally uses attackRange (not detect_radius) — enemies do not walk toward
-# structures, they only attack structures already adjacent to them.
-# Includes world breakables (trees, rocks) as well as player-placed objects.
+# Returns the nearest player-placed structure within detect_radius, or null.
+# Scans the "placeable" group — only objects placed by players (walls, windmills, etc.).
+# World breakables (trees, rocks) are excluded because they are not in "placeable".
+# To make a new placeable targetable by enemies: add "placeable" to its scene groups.
 func _find_nearest_structure() -> Node2D:
 	var nearest: Node2D = null
-	var nearest_dist := attackRange
-	for obj in get_tree().get_nodes_in_group("damageable"):
+	var nearest_dist := detect_radius
+	for obj in get_tree().get_nodes_in_group("placeable"):
 		if not is_instance_valid(obj): continue
-		if obj.is_in_group("player") or obj.is_in_group("enemy"): continue
 		var d := position.distance_to((obj as Node2D).position)
 		if d < nearest_dist:
 			nearest_dist = d
@@ -223,21 +234,36 @@ func _move_toward_target() -> void:
 			velocity += repel * speed * 4.0 * t
 	move_and_slide()
 
-# Fires the enemy's projectile attack if the cooldown has elapsed.
-# Applies projectile_color from Items.mobs if set — allows per-mob tinted projectiles.
+# Fires the enemy's attack toward targetPlayer if the cooldown has elapsed.
 func _try_attack() -> void:
 	if not $AttackCooldown.is_stopped():
 		return
 	$AttackCooldown.start()
+	_fire_projectile_at(targetPlayer.position)
+
+# Instantiates and launches the attack scene toward target_pos.
+# Applies projectile_sprite and projectile_color from Items.mobs if set.
+# Used for both player attacks (_try_attack) and structure attacks (_tick_attack_structure).
+func _fire_projectile_at(target_pos: Vector2) -> void:
 	var projectileScene := load("res://scenes/attacks/" + attack + ".tscn")
 	var projectile = projectileScene.instantiate()
 	spawner.get_node("Projectiles").add_child(projectile, true)
+	$MovingParts.look_at(target_pos)
 	projectile.position = position
 	projectile.get_node("MovingParts").rotation = $MovingParts.rotation
 	projectile.hitPlayer.connect(hitPlayer)
-	projectile.targetPos = targetPlayer.position
-	var color = Items.mobs[enemyId].get("projectile_color", Color.WHITE)
-	projectile.modulate = color
+	projectile.targetPos = target_pos
+	var mob_data: Dictionary = Items.mobs[enemyId]
+	var sprite := projectile.get_node_or_null("MovingParts/Adjust/Sprite2D") as Sprite2D
+	if sprite:
+		var custom_sprite: String = mob_data.get("projectile_sprite", "")
+		if custom_sprite:
+			var tex := load(custom_sprite) as Texture2D
+			if tex:
+				sprite.texture = tex
+				sprite.hframes = 1
+		var color: Color = mob_data.get("projectile_color", Color.WHITE)
+		sprite.modulate = color
 
 # Called by the projectile on contact — deals damage to the hit body.
 func hitPlayer(body) -> void:

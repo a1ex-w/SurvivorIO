@@ -11,7 +11,8 @@ var mobs := {
 	#   lose_radius    — distance at which enemy gives up and returns to IDLE (>= detect_radius)
 	#   weight             — spawn frequency relative to other mobs (higher = more common).
 	#                        Omitting defaults to 1. No code changes needed for new mob types.
-	#   projectile_color   — Color applied to the projectile sprite (optional, defaults to white).
+	#   projectile_sprite  — Path to a custom sprite PNG (optional). Use a white image so color tints correctly.
+	#   projectile_color   — Color tint applied to the projectile sprite (optional, defaults to white).
 	#   sprite_scale       — Vector2 scale for the enemy sprite (optional, defaults to Vector2(1,1)).
 	#   collision_radius   — float radius for the CircleShape2D hitbox (optional, keeps scene default).
 	#   drops              — loot table: { "item_id": { "min": N, "max": N } }
@@ -19,7 +20,7 @@ var mobs := {
 	"zombie":   {"maxhp": 40,  "speed": 50,  "attack": "slash_attack",      "attackDamage": 4,  "attackRange": 50,  "detect_radius": 300.0, "lose_radius": 500.0, "weight": 10, "drops": {"wood":  {"min": 1, "max": 2}}},
 	"spider":   {"maxhp": 80,  "speed": 100, "attack": "projectile_attack",  "attackDamage": 6,  "attackRange": 300, "detect_radius": 450.0, "lose_radius": 650.0, "weight": 7,  "drops": {"stone": {"min": 1, "max": 2}}},
 	"brute":    {"maxhp": 180, "speed": 40,  "attack": "slash_attack",       "attackDamage": 15, "attackRange": 70,  "detect_radius": 250.0, "lose_radius": 437.5, "weight": 3, "sprite_scale": Vector2(2.0, 2.0), "collision_radius": 20.0, "drops": {"wood":  {"min": 2, "max": 4}, "stone": {"min": 1, "max": 2}}},
-	"wraith":   {"maxhp": 50,  "speed": 140, "attack": "projectile_attack",  "attackDamage": 8,  "attackRange": 500, "detect_radius": 900.0, "lose_radius": 1200.0, "weight": 2, "projectile_color": Color(0.7, 0.0, 1.0), "drops": {"stone": {"min": 1, "max": 3}}},
+	"wraith":   {"maxhp": 50,  "speed": 140, "attack": "projectile_attack",  "attackDamage": 8,  "attackRange": 500, "detect_radius": 900.0, "lose_radius": 1200.0, "weight": 2, "projectile_sprite": "res://assets/characters/attacks/wraith_orb_purple.png", "drops": {"stone": {"min": 1, "max": 3}}},
 }
 
 var objects := {
