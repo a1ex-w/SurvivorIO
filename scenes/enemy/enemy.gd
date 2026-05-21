@@ -117,8 +117,8 @@ func _tick_idle() -> void:
 		$MovingParts.look_at(_wander_target)
 		move_and_slide()
 
-# Chases targetPlayer. Returns to IDLE if target is lost or moves beyond lose_radius;
-# IDLE immediately re-scans so the enemy may re-acquire the same or a closer player.
+# Chases targetPlayer. Retargets to the nearest player each tick so a closer
+# player always takes priority. Drops to IDLE if target is lost or moves beyond lose_radius.
 func _tick_chase() -> void:
 	if not is_instance_valid(targetPlayer) \
 			or position.distance_to(targetPlayer.position) > lose_radius:
@@ -126,19 +126,27 @@ func _tick_chase() -> void:
 		state = State.IDLE
 		_wander_target = Vector2.ZERO
 		return
+	var nearest := _find_nearest_player()
+	if nearest:
+		targetPlayer = nearest
 	rotateToTarget()
 	if position.distance_to(targetPlayer.position) <= attackRange:
 		state = State.ATTACK
 	else:
 		_move_toward_target()
 
-# Attacks targetPlayer each cooldown tick. Returns to CHASE if target steps out of range.
+# Attacks targetPlayer. Retargets to nearest player between shots (when cooldown
+# has elapsed) so the enemy finishes its current attack before switching focus.
 func _tick_attack() -> void:
 	if not is_instance_valid(targetPlayer):
 		targetPlayer = null
 		state = State.IDLE
 		_wander_target = Vector2.ZERO
 		return
+	if $AttackCooldown.is_stopped():
+		var nearest := _find_nearest_player()
+		if nearest:
+			targetPlayer = nearest
 	rotateToTarget()
 	if position.distance_to(targetPlayer.position) > attackRange:
 		state = State.CHASE
