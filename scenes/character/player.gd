@@ -15,6 +15,9 @@ signal player_killed
 		$MovingParts/Sprite2D.texture = load("res://assets/characters/bodies/"+value)
 		
 const WALL_SNAP := 64.0
+# Maximum distance (px) a player can place walls, doors, or windmills from their position.
+# Clamped before grid-snapping so walls always land on the nearest tile within range.
+const STRUCTURE_PLACE_RANGE := 128.0
 
 var inventory : Control
 var is_local := false
@@ -44,7 +47,11 @@ var equippedItem : String:
 			$AnimationPlayer.speed_scale = 1.0
 
 #stats
-@export var maxHP := 250.0
+const BASE_MAX_HP     := 250.0
+const BASE_SPEED      := 200
+const BASE_ATTACK_DMG := 10
+
+@export var maxHP := BASE_MAX_HP
 @export var hp := maxHP:
 	set(value):
 		hp = value
@@ -121,30 +128,66 @@ func sendMessage(text):
 		%PlayerMessages.add_child(messageBox, true)
 		messageBox.text = str(text)
 
+# Server-side chat command dispatcher. Only runs on the server (sendMessage guards this).
+# To add a new command: add a match branch here and implement a _cmd_<name> handler below.
 func _handle_command(text: String) -> void:
 	var parts := text.split(" ", false)
 	if parts.is_empty():
 		return
 	match parts[0]:
 		"/give":
-			if parts.size() < 3:
-				_send_server_msg("Usage: /give <player_name> <amount>")
+			if parts.size() < 2:
+				_send_server_msg("Usage: /give points <name> <amount>  |  /give item <name> <item_id> <amount>")
 				return
-			_cmd_give(parts[1], parts[2].to_int())
+			match parts[1]:
+				"points":
+					if parts.size() < 4:
+						_send_server_msg("Usage: /give points <name> <amount>")
+						return
+					_cmd_give_points(parts[2], parts[3].to_int())
+				"item":
+					if parts.size() < 5:
+						_send_server_msg("Usage: /give item <name> <item_id> <amount>")
+						return
+					_cmd_give_item(parts[2], parts[3], parts[4].to_int())
+				_:
+					_send_server_msg("Usage: /give points <name> <amount>  |  /give item <name> <item_id> <amount>")
 
-func _cmd_give(target_name: String, amount: int) -> void:
+# Returns the peer ID for a player by display name, or -1 if not found.
+func _find_pid(target_name: String) -> int:
 	for pid in Multihelper.spawnedPlayers:
 		if Multihelper.spawnedPlayers[pid]["name"] == target_name:
-			var player_node := get_node_or_null("/root/Game/Level/Main/Players/" + str(pid))
-			if player_node:
-				Multihelper.spawnedPlayers[pid]["score"] += amount
-				var new_score: int = Multihelper.spawnedPlayers[pid]["score"]
-				player_node._sync_score.rpc(new_score)
-				_send_server_msg("Gave %d score to %s (total: %d)" % [amount, target_name, new_score])
-				if new_score >= Victories.WIN_SCORE:
-					Multihelper.trigger_win(pid)
-			return
-	_send_server_msg("Player '%s' not found." % target_name)
+			return pid
+	return -1
+
+# Grants score to a player and triggers win condition if threshold is met.
+func _cmd_give_points(target_name: String, amount: int) -> void:
+	var pid := _find_pid(target_name)
+	if pid == -1:
+		_send_server_msg("Player '%s' not found." % target_name)
+		return
+	var player_node := get_node_or_null("/root/Game/Level/Main/Players/" + str(pid))
+	if player_node:
+		Multihelper.spawnedPlayers[pid]["score"] += amount
+		var new_score: int = Multihelper.spawnedPlayers[pid]["score"]
+		player_node._sync_score.rpc(new_score)
+		_send_server_msg("Gave %d points to %s (total: %d)" % [amount, target_name, new_score])
+		if new_score >= Victories.WIN_SCORE:
+			Multihelper.trigger_win(pid)
+
+# Adds items directly to a player's inventory. Inventory.addItem auto-syncs to the client.
+# Validates item_id against known items/placeables/recipes to prevent inventory corruption.
+func _cmd_give_item(target_name: String, item_id: String, amount: int) -> void:
+	var pid := _find_pid(target_name)
+	if pid == -1:
+		_send_server_msg("Player '%s' not found." % target_name)
+		return
+	var known := item_id in Items.equips or item_id in Items.placeables or item_id in Items.recipes
+	if not known:
+		_send_server_msg("Unknown item '%s'." % item_id)
+		return
+	Inventory.addItem(str(pid), item_id, amount)
+	_send_server_msg("Gave %dx %s to %s." % [amount, item_id, target_name])
 
 func _send_server_msg(msg: String) -> void:
 	var messageBoxScene := preload("res://scenes/ui/chat/message_box.tscn")
@@ -284,13 +327,22 @@ func _on_interact():
 		var selected := _get_selected_item()
 		if selected not in Items.placeables:
 			return
-		if selected == "torch" and _is_water_position(get_global_mouse_position()):
-			return
 		var at := get_global_mouse_position()
 		if selected == "boat":
 			at = _clamp_place_range(at, 50.0)
 		elif selected in ["wall", "stone_wall", "door", "stone_door"]:
+			at = _clamp_place_range(at, STRUCTURE_PLACE_RANGE)
 			at = (at / WALL_SNAP).round() * WALL_SNAP
+		elif selected == "windmill":
+			at = _clamp_place_range(at, STRUCTURE_PLACE_RANGE)
+			# Snap to wall-grid midpoints (32, 96, 160...) so windmill edges
+			# land exactly on wall boundaries. Two windmills 128px apart = flush.
+			var half := Vector2(WALL_SNAP * 0.5, WALL_SNAP * 0.5)
+			at = ((at - half) / WALL_SNAP).round() * WALL_SNAP + half
+		var err := _placement_error(selected, at)
+		if err:
+			_show_placement_error(err)
+			return
 		if multiplayer.is_server():
 			_place_selected(selected, at)
 		else:
@@ -369,8 +421,55 @@ func _place_selected(item_id: String, at: Vector2):
 		return
 	if !Inventory.checkHasItem(str(name), item_id):
 		return
+	if _placement_blocked(at) != "":
+		return
 	Inventory.removeItem(str(name), item_id, 1)
-	Items.spawnPlaceableRpc.rpc(item_id, at)
+	Items.spawnPlaceableRpc.rpc(item_id, at, int(name))
+
+# Returns the name of whatever is blocking placement at `at`, or "" if clear.
+# TileMap/TileMapLayer excluded (terrain). Player excluded via get_rid().
+# Return value is used both to block placement (server) and to label the error (client).
+func _placement_blocked(at: Vector2) -> String:
+	var space := get_world_2d().direct_space_state
+	var query := PhysicsShapeQueryParameters2D.new()
+	var shape := RectangleShape2D.new()
+	shape.size = Vector2(40, 40)
+	query.shape = shape
+	query.transform = Transform2D(0, at)
+	query.exclude = [get_rid()]
+	for result in space.intersect_shape(query, 4):
+		var collider = result.get("collider")
+		if collider is TileMap or collider is TileMapLayer:
+			continue
+		return (collider as Node).name
+	return ""
+
+# Checks all placement rules for item_id at world position at.
+# Returns a human-readable error string, or "" if placement is allowed.
+# Called client-side before the server RPC to give immediate feedback.
+# Gotcha: client physics state must match server — safe for call_local spawned objects.
+func _placement_error(item_id: String, at: Vector2) -> String:
+	if item_id != "boat" and _is_water_position(at):
+		return "Cannot place %s in water" % Items.format_item_name(item_id)
+	var blocker := _placement_blocked(at)
+	if blocker:
+		return "Too close to %s" % Items.format_item_name(blocker)
+	return ""
+
+# Spawns a temporary floating error label above the player that rises and fades.
+# Client-only — only call on the local player (is_local guard not needed, caller ensures it).
+func _show_placement_error(msg: String) -> void:
+	var label := Label.new()
+	label.text = msg
+	label.position = Vector2(-80, -90)
+	label.add_theme_color_override("font_color", Color(1, 0.35, 0.35))
+	label.add_theme_constant_override("outline_size", 2)
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	add_child(label)
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y - 40.0, 1.5)
+	tween.tween_property(label, "modulate:a", 0.0, 1.5)
+	tween.chain().tween_callback(label.queue_free)
 
 func _on_drop_item() -> void:
 	var inv: Dictionary = Inventory.inventories.get(str(name), {})
@@ -418,15 +517,21 @@ func sendProjectile(towards):
 	Items.spawnProjectile(self, spawnsProjectile, towards, "damageable")
 
 @rpc("authority", "call_local", "reliable")
+# Grants score AND combat stat bonuses — intended for kill rewards only.
+# Do NOT call this for passive income (e.g. windmills) — use gain_score() instead.
 func rewardPlayer(by):
 	hp += by * 5
 	maxHP += by * 5
 	attackDamage += by
 	speed += by
+	gain_score(by)
+
+# Grants score only — no stat bonuses. Use for passive income sources like windmills.
+func gain_score(amount: int) -> void:
 	if multiplayer.is_server():
 		var pid := int(str(name))
 		if pid in Multihelper.spawnedPlayers:
-			var new_score: int = Multihelper.spawnedPlayers[pid]["score"] + by
+			var new_score: int = Multihelper.spawnedPlayers[pid]["score"] + amount
 			Multihelper.spawnedPlayers[pid]["score"] = new_score
 			_sync_score.rpc(new_score)
 			if new_score >= Victories.WIN_SCORE:
@@ -455,9 +560,13 @@ func getDamage(causer, amount, _type):
 
 # Restores full HP on all peers and teleports to a random walkable tile.
 # Called by the server at the start of each new round.
+# Resets all stats that rewardPlayer() modifies so bonuses don't carry over between rounds.
 @rpc("authority", "call_local", "reliable")
 func respawn() -> void:
-	hp = maxHP
+	maxHP = BASE_MAX_HP
+	hp = BASE_MAX_HP
+	speed = BASE_SPEED
+	attackDamage = BASE_ATTACK_DMG
 	if multiplayer.is_server() and Multihelper.map \
 			and not Multihelper.map.walkable_tiles.is_empty():
 		var spawn_pos: Vector2 = Multihelper.map.tile_map.map_to_local(

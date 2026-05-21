@@ -1,7 +1,7 @@
 extends Node
 
 const SAVE_PATH := "user://victories.cfg"
-const WIN_SCORE := 10000
+const WIN_SCORE := 500
 
 # Populated on server from file; populated on clients via sync RPC
 var wins: Dictionary = {}

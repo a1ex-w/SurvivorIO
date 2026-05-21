@@ -43,10 +43,12 @@ var placeables := {
 	"stone_wall": "stone_wall",
 	"door": "door",
 	"stone_door": "stone_door",
+	"windmill": "windmill",
 }
 
 var recipes := {
 	"chest": {"wood": 4},
+	"windmill": {"wood": 6, "stone": 3},
 	"torch": {"wood": 3, "coal": 1},
 	"wall": {"wood": 1},
 	"stone_wall": {"stone": 2},
@@ -98,16 +100,38 @@ func format_item_name(item_id: String) -> String:
 		words[i] = words[i].capitalize()
 	return " ".join(words)
 
-func spawnPlaceable(item_id: String, at: Vector2):
+# Returns drop counts for a recipe at the given rate.
+# Fractional amounts are resolved probabilistically — e.g. 1.5 → 1 (50%) or 2 (50%).
+# Use server-side only (randomness must be authoritative).
+func calc_drops(recipe: Dictionary, rate: float) -> Dictionary:
+	var drops := {}
+	for item in recipe:
+		var amount: float = recipe[item] * rate
+		var count: int = int(amount)
+		if randf() < fmod(amount, 1.0):
+			count += 1
+		if count > 0:
+			drops[item] = count
+	return drops
+
+# Instantiates a placeable scene from Items.placeables and adds it to the Objects node.
+# owner_id is set only if the instance has an owner_id property (PlaceableObject subclasses).
+# Older placeables (walls, chest, etc.) without owner_id are unaffected — backward compatible.
+# Called on ALL peers via spawnPlaceableRpc — do not call directly for multiplayer placement.
+func spawnPlaceable(item_id: String, at: Vector2, owner_id: int = 0):
 	var objects := get_node("/root/Game/Level/Main/Objects")
 	var scene: PackedScene = load("res://scenes/object/" + placeables[item_id] + ".tscn")
 	var instance := scene.instantiate()
 	objects.add_child(instance, true)
 	instance.position = at
+	if instance.get("owner_id") != null:
+		instance.owner_id = owner_id
 
+# RPC wrapper for spawnPlaceable — runs on server and all clients simultaneously.
+# Pass the placing player's peer ID as owner_id so PlaceableObject can track ownership.
 @rpc("authority", "call_local", "reliable")
-func spawnPlaceableRpc(item_id: String, at: Vector2):
-	spawnPlaceable(item_id, at)
+func spawnPlaceableRpc(item_id: String, at: Vector2, owner_id: int = 0):
+	spawnPlaceable(item_id, at, owner_id)
 
 func spawnProjectile(spawner, pId, towardsPos, canTarget):
 	var projectilesNode := get_node("/root/Game/Level/Main/Projectiles")

@@ -16,6 +16,9 @@ signal win_announced(winner_name: String, win_count: int)
 
 var _win_pending := false
 signal data_loaded
+# Emitted on all peers after every map regeneration (initial load and round reset).
+# Connect minimap and any other systems that need to redraw after a new map generates.
+signal map_regenerated
 
 const PORT = Constants.PORT
 
@@ -176,14 +179,21 @@ func _reset_round() -> void:
 	mapSeed = new_seed
 	_regen_map.rpc(new_seed)
 
-# Runs on all peers: regenerates the map with the new seed so terrain is
-# identical everywhere. Server also spawns initial objects and respawns players.
+# Runs on all peers: clears placed objects and pickups, regenerates the map,
+# then signals systems (minimap, etc.) that a new map is ready.
+# Server additionally spawns initial objects and respawns all players.
+# Gotcha: Objects and Pickups are cleared on ALL peers here because
+# spawnPlaceableRpc and spawnPickups both run on all peers — clear_world()
+# alone (server-only) leaves stale objects on clients after a round reset.
 @rpc("authority", "call_local", "reliable")
 func _regen_map(new_seed: int) -> void:
 	mapSeed = new_seed
 	var m := get_node_or_null("/root/Game/Level/Main")
 	if m:
+		for c in m.get_node("Objects").get_children(): c.queue_free()
+		for c in m.get_node("Pickups").get_children(): c.queue_free()
 		m.get_node("Map").generateMap()
+	map_regenerated.emit()
 	if multiplayer.is_server() and m:
 		m.spawn_initial_objects()
 		for player in m.get_node("Players").get_children():
