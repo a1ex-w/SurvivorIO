@@ -51,6 +51,11 @@ var targetPlayer: CharacterBody2D
 			img.fill(Color(1.0, 0.0, 1.0))  # magenta = missing sprite
 			tex = ImageTexture.create_from_image(img)
 		%Sprite2D.texture = tex
+		%Sprite2D.scale = data.get("sprite_scale", Vector2(1.0, 1.0))
+		if "collision_radius" in data:
+			var shape := CircleShape2D.new()
+			shape.radius = data["collision_radius"]
+			$CollisionShape2D.shape = shape
 		for stat in data.keys():
 			set(stat, data[stat])
 
