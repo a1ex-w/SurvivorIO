@@ -333,6 +333,7 @@ func _on_interact():
 			at = (at / WALL_SNAP).round() * WALL_SNAP
 		elif selected == "windmill":
 			at = _clamp_place_range(at, STRUCTURE_PLACE_RANGE)
+			at = (at / (WALL_SNAP * 2)).round() * (WALL_SNAP * 2)
 		if multiplayer.is_server():
 			_place_selected(selected, at)
 		else:
