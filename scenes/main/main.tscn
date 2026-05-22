@@ -67,7 +67,7 @@ _spawnable_scenes = PackedStringArray("res://scenes/item/pickup.tscn")
 spawn_path = NodePath("../Pickups")
 
 [node name="ObjectSpawnTimer" type="Timer" parent="."]
-wait_time = 10.0
+wait_time = 60.0
 autostart = true
 
 [node name="EnemySpawnTimer" type="Timer" parent="."]

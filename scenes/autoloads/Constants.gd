@@ -15,12 +15,18 @@ const LAND_TILES: Array[Vector2i] = [
 	Vector2i(16,0), Vector2i(17,0)
 ]
 const WATER_TILES: Array[Vector2i] = [Vector2i(18,0), Vector2i(19,0)]
-const MAX_OBJECTS := 30
+# Base object cap for solo play. Actual cap = max(MAX_OBJECTS_BASE, player_count * OBJECTS_PER_PLAYER).
+# Computed dynamically in main.gd so more players always have enough resources to gather.
+const MAX_OBJECTS_BASE := 15
+const OBJECTS_PER_PLAYER := 8
 # Max enemies that can be targeting any single player at once.
 const MAX_ENEMIES_PER_PLAYER := 3
 # Absolute enemy cap regardless of player count. Actual cap used is
 # min(MAX_ENEMIES_TOTAL, player_count * MAX_ENEMIES_PER_PLAYER).
 const MAX_ENEMIES_TOTAL := 12
+# Minimum world-space distance a replacement object must spawn from the one just destroyed.
+# Prevents a new resource appearing in the same spot the player is already farming.
+const OBJECT_RESPAWN_MIN_DIST := 512.0
 
 #Player
 const MAX_INVENTORY_SLOTS := 9
