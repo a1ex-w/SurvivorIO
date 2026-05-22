@@ -40,7 +40,7 @@ func createHUD():
 func spawnObjects(amount: int) -> int:
 	var breakableScene := preload("res://scenes/object/breakable.tscn")
 	for i in range(amount):
-		var spawnPos := $Map.tile_map.map_to_local($Map.walkable_tiles.pick_random())
+		var spawnPos: Vector2 = $Map.tile_map.map_to_local($Map.walkable_tiles.pick_random())
 		var breakable := breakableScene.instantiate()
 		var objectId := _pick_next_object_type()
 		$Objects.add_child(breakable, true)
@@ -104,8 +104,8 @@ func on_object_broken(broken_pos: Vector2, object_id: String) -> void:
 # Spawns one object on a walkable tile at least OBJECT_RESPAWN_MIN_DIST away from
 # excluded_pos. Falls back to a fully random tile if no qualifying tiles exist.
 func _spawn_away_from(excluded_pos: Vector2) -> void:
-	var tile_map := Multihelper.map.tile_map
-	var candidates := Multihelper.map.walkable_tiles.filter(func(tile: Vector2i) -> bool:
+	var tile_map: TileMap = Multihelper.map.tile_map
+	var candidates: Array = Multihelper.map.walkable_tiles.filter(func(tile: Vector2i) -> bool:
 		return tile_map.map_to_local(tile).distance_to(excluded_pos) > Constants.OBJECT_RESPAWN_MIN_DIST
 	)
 	var spawn_pos: Vector2
