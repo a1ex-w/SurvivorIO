@@ -57,11 +57,11 @@ func spawnObjects(amount: int) -> int:
 # If any type is below its scaled minimum, picks randomly from those deficient types.
 # Otherwise falls through to weighted random selection.
 func _pick_next_object_type() -> String:
-	var player_count := max(1, Multihelper.spawnedPlayers.size())
+	var player_count: int = max(1, Multihelper.spawnedPlayers.size())
 	var deficient: Array = []
 	for key in Items.objects:
 		var base_min: int = Items.objects[key].get("min_count", 0)
-		var scaled_min := base_min * player_count
+		var scaled_min: int = base_min * player_count
 		if scaled_min > 0 and spawnedByType.get(key, 0) < scaled_min:
 			deficient.append(key)
 	if not deficient.is_empty():
