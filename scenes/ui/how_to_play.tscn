@@ -1,0 +1,97 @@
+[gd_scene format=3 uid="uid://how_to_play01"]
+
+[ext_resource type="Script" path="res://scenes/ui/how_to_play.gd" id="1_htp"]
+
+[node name="HowToPlay" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_htp")
+
+[node name="DimRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.7)
+mouse_filter = 0
+
+[node name="PanelContainer" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -260.0
+offset_right = 300.0
+offset_bottom = 260.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="PanelContainer"]
+layout_mode = 2
+
+[node name="HeaderRow" type="HBoxContainer" parent="PanelContainer/VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="PanelContainer/VBox/HeaderRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+text = "How to Play"
+
+[node name="CloseButton" type="Button" parent="PanelContainer/VBox/HeaderRow"]
+layout_mode = 2
+text = "✕"
+
+[node name="HSeparator" type="HSeparator" parent="PanelContainer/VBox"]
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="PanelContainer/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 440)
+
+[node name="Content" type="RichTextLabel" parent="PanelContainer/VBox/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = true
+text = "[b]GOAL[/b]
+Reach [b]500 score[/b] first to win the round. A new round begins after a 5-second countdown.
+
+[b]CONTROLS[/b]
+WASD             — Move
+Shift            — Sprint
+1–9 / Scroll     — Select hotbar item
+LMB              — Attack / Use
+E                — Interact / Place item
+Q                — Drop selected item
+C                — Crafting menu
+Enter            — Chat
+ESC              — Settings
+
+[b]EARNING SCORE[/b]
+Destroy world objects (trees, rocks)  +1
+Kill a mob (zombie, spider, etc.)     +2
+Kill a player                         +4
+Windmill (passive, per 10 sec each)  +10
+
+[b]GATHERING & CRAFTING[/b]
+Harvest trees for [b]wood[/b], rocks for [b]stone[/b].
+Press [b]C[/b] to open the crafting menu. Select a recipe on the left, then craft if you have the ingredients.
+Place craftable items with [b]E[/b] facing the target location.
+
+[b]STRUCTURES[/b]
+Walls and doors block enemy and player movement.
+[b]Windmills[/b] generate +10 score every 10 seconds for the player who placed them — defend them!
+Chests store items. Torches repel nearby enemies.
+
+[b]SERVER COMMANDS[/b]  (host only, type in chat)
+/give points [name] [amount]         — grant score to a player
+/give item [name] [item_id] [amount] — give an item to a player
+/spawn [mob_id] [name]               — spawn a mob near a player"
+
+[connection signal="pressed" from="PanelContainer/VBox/HeaderRow/CloseButton" to="." method="_on_close_pressed"]
