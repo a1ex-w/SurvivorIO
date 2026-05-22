@@ -1,3 +1,9 @@
+# Collaborative Workflow
+
+This is a multi-developer project. Other contributors push to branches and merge to main independently. **Always `git fetch` before doing anything to avoid working on stale state.**
+
+Run `git fetch origin` at the start of every session, after every PR merge to main, and when switching branches. Check `git status` and `git log --oneline origin/main` to confirm your local state matches remote before starting work. If local main is behind origin/main, pull before branching or rebasing.
+
 # Code Quality Checklist
 
 Before writing any new code, check the codebase for existing systems that already solve or partially solve the problem. Extend or reuse before creating something new.

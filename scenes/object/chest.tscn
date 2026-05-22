@@ -13,7 +13,7 @@ properties/0/path = NodePath(".:position")
 properties/0/spawn = true
 properties/0/replication_mode = 2
 
-[node name="Chest" type="StaticBody2D"]
+[node name="Chest" type="StaticBody2D" groups=["placeable"]]
 script = ExtResource("1_chest")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]

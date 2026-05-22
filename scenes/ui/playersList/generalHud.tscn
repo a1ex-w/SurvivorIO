@@ -88,4 +88,5 @@ ESC — Settings
 
 [Server commands]
 /give points <name> <amount> — Grant score
-/give item <name> <item_id> <amount> — Give item"
+/give item <name> <item_id> <amount> — Give item
+/spawn <mob_id> <name> — Spawn mob near player"

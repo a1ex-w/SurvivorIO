@@ -7,7 +7,6 @@ const objectWaveCount := 10
 var spawnedObjects := 0
 
 #enemies
-var enemyTypes := Items.mobs.keys()
 const enemyWaveCount := 1
 const maxEnemiesPerPlayer := Constants.MAX_ENEMIES_PER_PLAYER
 const enemySpawnRadiusMin := 8
@@ -54,21 +53,70 @@ func _on_object_spawn_timer_timeout():
 		trySpawnObjectWave()
 
 #enemy spawn
+
+# Spawns a specific mob type near the given player. Used by the /spawn server command.
+# Ignores the enemy cap so it works for testing regardless of current mob count.
+func spawn_mob_for_player(mob_id: String, pid: int) -> void:
+	var positions: Array = $NavHelper.getNRandomNavigableTileInPlayerRadius(pid, 1, enemySpawnRadiusMin, enemySpawnRadiusMax)
+	if positions.is_empty():
+		return
+	var enemyScene := preload("res://scenes/enemy/enemy.tscn")
+	var enemy := enemyScene.instantiate()
+	$Enemies.add_child(enemy, true)
+	enemy.position = positions[0]
+	enemy.spawner = self
+	enemy.targetPlayerId = pid
+	enemy.enemyId = mob_id
+	increasePlayerEnemyCount(pid)
+
+# Returns the total number of enemies currently alive on the map.
+func _total_enemies() -> int:
+	var total := 0
+	for pid in spawnedEnemies:
+		total += spawnedEnemies[pid]
+	return total
+
+# Returns the effective enemy cap: per-player × players, capped by MAX_ENEMIES_TOTAL.
+func _max_enemies() -> int:
+	var per_player_total := Multihelper.spawnedPlayers.size() * maxEnemiesPerPlayer
+	return min(per_player_total, Constants.MAX_ENEMIES_TOTAL)
+
+# Selects a mob type using weighted probability from Items.mobs.
+# Higher weight = more frequent spawn. Omitting weight defaults to 1.
+# To adjust rarity: change the weight value in Items.mobs — no code changes needed.
+func _pick_weighted_mob() -> String:
+	var total_weight := 0
+	for key in Items.mobs:
+		total_weight += Items.mobs[key].get("weight", 1)
+	var roll := randi() % total_weight
+	var cumulative := 0
+	for key in Items.mobs:
+		cumulative += Items.mobs[key].get("weight", 1)
+		if roll < cumulative:
+			return key
+	return Items.mobs.keys().back()
+
 func trySpawnEnemies():
+	if _total_enemies() >= _max_enemies():
+		return
 	var enemyScene := preload("res://scenes/enemy/enemy.tscn")
 	var players = Multihelper.spawnedPlayers.keys()
 	for player in players:
+		if _total_enemies() >= _max_enemies():
+			break
 		var playerEnemies := getPlayerEnemyCount(player)
 		if playerEnemies < maxEnemiesPerPlayer:
 			var toSpawn = min(maxEnemiesPerPlayer - playerEnemies, enemyWaveCount)
 			var spawnPositions = $NavHelper.getNRandomNavigableTileInPlayerRadius(player, toSpawn, enemySpawnRadiusMin, enemySpawnRadiusMax)
 			for pos in spawnPositions:
+				if _total_enemies() >= _max_enemies():
+					break
 				var enemy = enemyScene.instantiate()
 				$Enemies.add_child(enemy,true)
 				enemy.position = pos
 				enemy.spawner = self
 				enemy.targetPlayerId = player
-				enemy.enemyId = enemyTypes.pick_random()
+				enemy.enemyId = _pick_weighted_mob()
 				increasePlayerEnemyCount(player)
 
 func getPlayerEnemyCount(pId) -> int:
